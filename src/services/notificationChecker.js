@@ -1,15 +1,11 @@
 import { sendNotification } from "./notificationService";
-
 export const checkTaskNotifications = (tasks) => {
   const now = new Date();
-
   tasks.forEach((task) => {
     if (task.status === "completed") return;
-
     const deadline = new Date(task.deadline);
     const hoursLeft = (deadline - now) / (1000 * 60 * 60);
     const remaining = task.estimatedTime - (task.actualTime || 0);
-
     // Overdue
     if (hoursLeft < 0) {
       sendNotification(
@@ -18,7 +14,6 @@ export const checkTaskNotifications = (tasks) => {
       );
       return;
     }
-
     // Less than 2 hours left
     if (hoursLeft < 2) {
       sendNotification(
@@ -27,7 +22,6 @@ export const checkTaskNotifications = (tasks) => {
       );
       return;
     }
-
     // Not enough time
     if (hoursLeft < remaining) {
       sendNotification(
@@ -36,7 +30,6 @@ export const checkTaskNotifications = (tasks) => {
       );
       return;
     }
-
     // Due today
     if (hoursLeft < 24) {
       sendNotification(
