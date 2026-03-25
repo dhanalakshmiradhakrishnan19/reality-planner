@@ -3,7 +3,6 @@ export const requestPermission = async () => {
   const permission = await Notification.requestPermission();
   return permission === "granted";
 };
-
 export const sendNotification = (title, body) => {
   if (Notification.permission === "granted") {
     new Notification(title, {
