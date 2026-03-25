@@ -15,11 +15,40 @@ export default function Auth() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+const validateEmail = (email) => {
+  // Check basic format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return "Please enter a valid email address.";
+  }
+
+  // Check common fake domains
+  const fakeDomains = [
+    "fake.com", "test.com", "example.com",
+    "abc.com", "xyz.com", "temp.com",
+    "fake.in", "notreal.com", "invalid.com"
+  ];
+
+  const domain = email.split("@")[1].toLowerCase();
+  if (fakeDomains.includes(domain)) {
+    return "Please use a real email address.";
+  }
+
+  return null;
+};
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
     setLoading(true);
+
+const emailError = validateEmail(email);
+if (emailError) {
+  setError(emailError);
+  setLoading(false);
+  return;
+}
 
     try {
       if (isLogin) {
