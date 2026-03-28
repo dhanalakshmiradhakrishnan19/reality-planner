@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { subscribeToTasks, updateTask, deleteTask } from "../services/taskService";
 import { auth } from "../services/firebase";
 import { useToast } from "../context/ToastContext";
+import confetti from "canvas-confetti";
 
 export default function TaskList() {
   const [tasks, setTasks] = useState([]);
@@ -132,6 +133,14 @@ export default function TaskList() {
     if (task.startedAt) await handleStop(task);
     await updateTask(task.id, { status: "completed", completedAt: new Date() });
     showToast("Task completed! 🎉", "success");
+
+    // Confetti animation
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.6 },
+      colors: ["#7c6bff", "#ff6b9d", "#6bffce", "#ffb300", "#4caf50"]
+    });
   };
 
   const handleDelete = async (id) => {
