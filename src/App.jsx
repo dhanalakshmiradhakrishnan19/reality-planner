@@ -10,16 +10,12 @@ import Pomodoro from "./components/Pomodoro";
 import Auth from "./components/Auth";
 import { checkTaskNotifications } from "./services/notificationChecker";
 import { subscribeToTasks } from "./services/taskService";
-import Profile from "./components/Profile";
-
 const tabs = [
   { id: "dashboard", label: "📊 Dashboard" },
   { id: "daily", label: "📅 Daily" },
   { id: "tasks", label: "📝 Tasks" },
-  { id: "pomodoro", label: "Focus" },
-  { id: "profile", label: "👤 Profile" },
+  { id: "pomodoro", label: "🍅 Focus" },
 ];
-
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +114,6 @@ function App() {
         </div>
       )}
       {activeTab === "pomodoro" && <Pomodoro />}
-      {activeTab === "profile" && <Profile />}
     </div>
   );
 }
