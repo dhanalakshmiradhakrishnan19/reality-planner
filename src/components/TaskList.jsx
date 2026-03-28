@@ -47,6 +47,31 @@ export default function TaskList() {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  const exportToCSV = () => {
+    const headers = ["Title", "Subject", "Deadline", "Priority", "Estimated Hours", "Actual Hours", "Status"];
+    const rows = tasks.map((t) => [
+      t.title,
+      t.subject,
+      t.deadline,
+      t.priority || "medium",
+      t.estimatedTime,
+      (t.actualTime || 0).toFixed(2),
+      t.status
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "reality-planner-tasks.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -152,7 +177,6 @@ export default function TaskList() {
         />
 
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          {/* Status filters */}
           <div style={{ display: "flex", gap: "4px" }}>
             {["all", "pending", "completed"].map((s) => (
               <button
@@ -177,7 +201,6 @@ export default function TaskList() {
 
           <div style={{ width: "1px", background: "var(--border)", margin: "0 4px" }} />
 
-          {/* Priority filters */}
           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
             {[
               { value: "all", label: "All" },
@@ -206,9 +229,26 @@ export default function TaskList() {
           </div>
         </div>
 
-        <p style={{ fontSize: "12px", color: "var(--text2)" }}>
-          Showing {filteredTasks.length} of {tasks.length} tasks
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <p style={{ fontSize: "12px", color: "var(--text2)" }}>
+            Showing {filteredTasks.length} of {tasks.length} tasks
+          </p>
+          <button
+            onClick={exportToCSV}
+            style={{
+              background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+              color: "white",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: "700",
+              cursor: "pointer"
+            }}
+          >
+            📤 Export to CSV
+          </button>
+        </div>
       </div>
 
       {/* Task Cards */}
