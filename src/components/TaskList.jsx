@@ -35,7 +35,14 @@ export default function TaskList() {
     return () => clearInterval(interval);
   }, [tasks]);
 
-  const filteredTasks = tasks.filter((task) => {
+  // Sort: pinned first, then by priority, then rest
+  const sortedTasks = [...tasks].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return 0;
+  });
+
+  const filteredTasks = sortedTasks.filter((task) => {
     const matchesSearch =
       task.title.toLowerCase().includes(search.toLowerCase()) ||
       task.subject.toLowerCase().includes(search.toLowerCase());
@@ -95,6 +102,11 @@ export default function TaskList() {
     if (hoursLeft < remaining) return `🔴 HIGH RISK: Only ${hoursLeft.toFixed(1)} hrs left but ~${remaining.toFixed(1)} hrs of work remaining`;
     else if (hoursLeft < remaining * 1.5) return `🟡 MEDIUM RISK: Cutting it close`;
     return `🟢 On track`;
+  };
+
+  const handlePin = async (task) => {
+    await updateTask(task.id, { pinned: !task.pinned });
+    showToast(task.pinned ? "Task unpinned" : "Task pinned to top! 📌", "info");
   };
 
   const handleStart = async (task) => {
@@ -239,8 +251,12 @@ export default function TaskList() {
         </p>
       ) : (
         filteredTasks.map((task) => (
-          <div key={task.id} className={`task-card ${task.status === "completed" ? "completed" : ""}`}>
-
+          <div key={task.id} className={`task-card ${task.status === "completed" ? "completed" : ""}`}
+            style={{
+              borderLeft: task.pinned ? "4px solid var(--accent2)" : undefined,
+              background: task.pinned ? "var(--card)" : undefined
+            }}
+          >
             {editingId === task.id ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <input className="edit-input" value={editData.title} onChange={(e) => setEditData({ ...editData, title: e.target.value })} placeholder="Title" />
@@ -260,10 +276,15 @@ export default function TaskList() {
 
             ) : (
               <>
+                {/* Title row with pin indicator */}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                  {task.pinned && (
+                    <span style={{ fontSize: "14px" }} title="Pinned">📌</span>
+                  )}
                   <h3 style={{ margin: 0 }}>{task.title} {task.status === "completed" && "✅"}</h3>
                   <PriorityBadge priority={task.priority} />
                 </div>
+
                 <p className="task-meta">📚 {task.subject}</p>
                 <p className="task-meta">📅 Deadline: {task.deadline}</p>
                 <p className="task-meta">🕐 Estimated: {task.estimatedTime} hrs &nbsp;|&nbsp; Actual: {(task.actualTime || 0).toFixed(2)} hrs</p>
@@ -289,6 +310,21 @@ export default function TaskList() {
                       <button className="btn-complete" onClick={() => handleComplete(task)}>✅ Complete</button>
                     </>
                   )}
+                  <button
+                    onClick={() => handlePin(task)}
+                    style={{
+                      padding: "7px 11px",
+                      borderRadius: "8px",
+                      border: "none",
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                      background: task.pinned ? "rgba(255,107,157,0.2)" : "var(--bg3)",
+                      color: task.pinned ? "var(--accent2)" : "var(--text2)"
+                    }}
+                  >
+                    {task.pinned ? "📌 Pinned" : "📌 Pin"}
+                  </button>
                   <button className="btn-edit" onClick={() => handleEditStart(task)}>✏️ Edit</button>
                   <button className="btn-delete" onClick={() => handleDelete(task.id)}>🗑️ Delete</button>
                 </div>
