@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { subscribeToTasks, updateTask, deleteTask } from "../services/taskService";
 import { auth } from "../services/firebase";
+import { useToast } from "../context/ToastContext";
 
 export default function TaskList() {
   const [tasks, setTasks] = useState([]);
@@ -10,6 +11,7 @@ export default function TaskList() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
+  const { showToast } = useToast();
 
   useEffect(() => {
     const unsubscribe = subscribeToTasks(auth.currentUser.uid, (data) => {
@@ -50,19 +52,15 @@ export default function TaskList() {
   const exportToCSV = () => {
     const headers = ["Title", "Subject", "Deadline", "Priority", "Estimated Hours", "Actual Hours", "Status"];
     const rows = tasks.map((t) => [
-      t.title,
-      t.subject,
-      t.deadline,
+      t.title, t.subject, t.deadline,
       t.priority || "medium",
       t.estimatedTime,
       (t.actualTime || 0).toFixed(2),
       t.status
     ]);
-
     const csvContent = [headers, ...rows]
       .map((row) => row.map((cell) => `"${cell}"`).join(","))
       .join("\n");
-
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -70,6 +68,7 @@ export default function TaskList() {
     a.download = "reality-planner-tasks.csv";
     a.click();
     URL.revokeObjectURL(url);
+    showToast("Tasks exported to CSV!", "success");
   };
 
   const formatTime = (seconds) => {
@@ -102,6 +101,7 @@ export default function TaskList() {
     const updateData = { startedAt: new Date() };
     if (!task.firstStartedAt) updateData.firstStartedAt = new Date();
     await updateTask(task.id, updateData);
+    showToast("Timer started!", "info");
   };
 
   const handleStop = async (task) => {
@@ -113,15 +113,19 @@ export default function TaskList() {
       actualTime: (task.actualTime || 0) + hours,
       startedAt: null
     });
+    showToast("Timer stopped!", "warning");
   };
 
   const handleComplete = async (task) => {
     if (task.startedAt) await handleStop(task);
     await updateTask(task.id, { status: "completed", completedAt: new Date() });
+    showToast("Task completed! 🎉", "success");
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Delete this task?")) await deleteTask(id);
+    if (!window.confirm("Delete this task?")) return;
+    await deleteTask(id);
+    showToast("Task deleted", "error");
   };
 
   const handleEditStart = (task) => {
@@ -144,6 +148,7 @@ export default function TaskList() {
       priority: editData.priority || "medium"
     });
     setEditingId(null);
+    showToast("Task updated!", "success");
   };
 
   return (
@@ -179,21 +184,13 @@ export default function TaskList() {
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", gap: "4px" }}>
             {["all", "pending", "completed"].map((s) => (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(s)}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "8px",
-                  border: "none",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                  background: filterStatus === s ? "var(--accent)" : "var(--bg3)",
-                  color: filterStatus === s ? "white" : "var(--text2)",
-                  transition: "all 0.2s"
-                }}
-              >
+              <button key={s} onClick={() => setFilterStatus(s)} style={{
+                padding: "6px 12px", borderRadius: "8px", border: "none",
+                fontSize: "12px", fontWeight: "700", cursor: "pointer",
+                background: filterStatus === s ? "var(--accent)" : "var(--bg3)",
+                color: filterStatus === s ? "white" : "var(--text2)",
+                transition: "all 0.2s"
+              }}>
                 {s.charAt(0).toUpperCase() + s.slice(1)}
               </button>
             ))}
@@ -208,21 +205,13 @@ export default function TaskList() {
               { value: "medium", label: "🟡 Medium" },
               { value: "low", label: "🟢 Low" }
             ].map((p) => (
-              <button
-                key={p.value}
-                onClick={() => setFilterPriority(p.value)}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "8px",
-                  border: "none",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                  background: filterPriority === p.value ? "var(--accent2)" : "var(--bg3)",
-                  color: filterPriority === p.value ? "white" : "var(--text2)",
-                  transition: "all 0.2s"
-                }}
-              >
+              <button key={p.value} onClick={() => setFilterPriority(p.value)} style={{
+                padding: "6px 12px", borderRadius: "8px", border: "none",
+                fontSize: "12px", fontWeight: "700", cursor: "pointer",
+                background: filterPriority === p.value ? "var(--accent2)" : "var(--bg3)",
+                color: filterPriority === p.value ? "white" : "var(--text2)",
+                transition: "all 0.2s"
+              }}>
                 {p.label}
               </button>
             ))}
@@ -233,19 +222,11 @@ export default function TaskList() {
           <p style={{ fontSize: "12px", color: "var(--text2)" }}>
             Showing {filteredTasks.length} of {tasks.length} tasks
           </p>
-          <button
-            onClick={exportToCSV}
-            style={{
-              background: "linear-gradient(135deg, var(--accent), var(--accent2))",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              fontSize: "12px",
-              fontWeight: "700",
-              cursor: "pointer"
-            }}
-          >
+          <button onClick={exportToCSV} style={{
+            background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+            color: "white", border: "none", padding: "8px 16px",
+            borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer"
+          }}>
             📤 Export to CSV
           </button>
         </div>
@@ -329,13 +310,8 @@ function PriorityBadge({ priority }) {
   const p = config[priority] || config["medium"];
   return (
     <span style={{
-      fontSize: "11px",
-      fontWeight: "700",
-      color: p.color,
-      background: p.bg,
-      padding: "2px 8px",
-      borderRadius: "20px",
-      whiteSpace: "nowrap"
+      fontSize: "11px", fontWeight: "700", color: p.color,
+      background: p.bg, padding: "2px 8px", borderRadius: "20px", whiteSpace: "nowrap"
     }}>
       {p.label}
     </span>

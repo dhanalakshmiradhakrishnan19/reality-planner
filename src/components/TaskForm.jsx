@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { addTaskToDB } from "../services/taskService";
 import { auth } from "../services/firebase";
+import { useToast } from "../context/ToastContext";
 
 export default function TaskForm() {
   const [title, setTitle] = useState("");
@@ -8,11 +9,12 @@ export default function TaskForm() {
   const [deadline, setDeadline] = useState("");
   const [estimatedTime, setEstimatedTime] = useState("");
   const [priority, setPriority] = useState("medium");
+  const { showToast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || !subject || !deadline || !estimatedTime) {
-      alert("Please fill all fields");
+      showToast("Please fill all fields", "error");
       return;
     }
     const newTask = {
@@ -28,41 +30,23 @@ export default function TaskForm() {
     };
     try {
       await addTaskToDB(newTask, auth.currentUser.uid);
+      showToast("Task added successfully!", "success");
       setTitle("");
       setSubject("");
       setDeadline("");
       setEstimatedTime("");
       setPriority("medium");
     } catch (error) {
-      console.error("Error saving task:", error);
+      showToast("Failed to add task. Try again.", "error");
     }
   };
 
   return (
     <form className="task-form" onSubmit={handleSubmit}>
-      <input
-        type="text"
-        placeholder="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="Subject"
-        value={subject}
-        onChange={(e) => setSubject(e.target.value)}
-      />
-      <input
-        type="date"
-        value={deadline}
-        onChange={(e) => setDeadline(e.target.value)}
-      />
-      <input
-        type="number"
-        placeholder="Estimated hours"
-        value={estimatedTime}
-        onChange={(e) => setEstimatedTime(e.target.value)}
-      />
+      <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+      <input type="text" placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
+      <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+      <input type="number" placeholder="Estimated hours" value={estimatedTime} onChange={(e) => setEstimatedTime(e.target.value)} />
       <select
         value={priority}
         onChange={(e) => setPriority(e.target.value)}

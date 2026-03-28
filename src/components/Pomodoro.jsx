@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useToast } from "../context/ToastContext";
 
 export default function Pomodoro({ pomodoroSettings = { focus: 25, break: 5 } }) {
   const [secondsLeft, setSecondsLeft] = useState(pomodoroSettings.focus * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [sessions, setSessions] = useState(0);
+  const { showToast } = useToast();
 
   // Reset timer when settings change
   useEffect(() => {
@@ -32,11 +34,11 @@ export default function Pomodoro({ pomodoroSettings = { focus: 25, break: 5 } })
     setIsRunning(false);
     if (!isBreak) {
       setSessions((prev) => prev + 1);
-      alert(`✅ Focus session done! Take a ${pomodoroSettings.break} min break.`);
+     showToast(`Focus session done! Take a ${pomodoroSettings.break} min break.`, "success");
       setIsBreak(true);
       setSecondsLeft(pomodoroSettings.break * 60);
     } else {
-      alert(`☕ Break over! Start your next ${pomodoroSettings.focus} min focus session.`);
+      showToast(`Break over! Start your next focus session.`, "info");
       setIsBreak(false);
       setSecondsLeft(pomodoroSettings.focus * 60);
     }
