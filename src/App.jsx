@@ -10,12 +10,14 @@ import Pomodoro from "./components/Pomodoro";
 import Auth from "./components/Auth";
 import { checkTaskNotifications } from "./services/notificationChecker";
 import { subscribeToTasks } from "./services/taskService";
+import Profile from "./components/Profile";
 
 const tabs = [
   { id: "dashboard", label: "📊 Dashboard" },
   { id: "daily", label: "📅 Daily" },
   { id: "tasks", label: "📝 Tasks" },
-  { id: "pomodoro", label: "🎯 Focus" },
+  { id: "pomodoro", label: "Focus" },
+  { id: "profile", label: "👤 Profile" },
 ];
 
 function App() {
@@ -23,7 +25,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const { theme, setTheme } = useTheme();
-
   // Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -32,11 +33,9 @@ function App() {
     });
     return () => unsubscribe();
   }, []);
-
   // Request notification permission on login
   useEffect(() => {
     if (!user) return;
-
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
@@ -48,28 +47,23 @@ function App() {
       });
     }
   }, [user]);
-
   // Check notifications every 5 minutes
   useEffect(() => {
     if (!user) return;
-
     let unsubscribe = subscribeToTasks(user.uid, (tasks) => {
       checkTaskNotifications(tasks);
     });
-
     const interval = setInterval(() => {
       if (unsubscribe) unsubscribe();
       unsubscribe = subscribeToTasks(user.uid, (tasks) => {
         checkTaskNotifications(tasks);
       });
     }, 5 * 60 * 1000);
-
     return () => {
       if (unsubscribe) unsubscribe();
       clearInterval(interval);
     };
   }, [user]);
-
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -77,12 +71,9 @@ function App() {
       </div>
     );
   }
-
   if (!user) return <Auth />;
-
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "16px" }}>
-
       {/* Header */}
       <div className="app-header">
         <span className="app-title">📱 Reality Planner</span>
@@ -105,7 +96,6 @@ function App() {
           </button>
         </div>
       </div>
-
       {/* Navbar */}
       <div className="navbar">
         {tabs.map((tab) => (
@@ -118,7 +108,6 @@ function App() {
           </button>
         ))}
       </div>
-
       {/* Content */}
       {activeTab === "dashboard" && <Dashboard />}
       {activeTab === "daily" && <DailyPlan />}
@@ -129,8 +118,8 @@ function App() {
         </div>
       )}
       {activeTab === "pomodoro" && <Pomodoro />}
+      {activeTab === "profile" && <Profile />}
     </div>
   );
 }
-
 export default App;
