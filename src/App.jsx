@@ -11,6 +11,8 @@ import Auth from "./components/Auth";
 import { checkTaskNotifications } from "./services/notificationChecker";
 import { subscribeToTasks } from "./services/taskService";
 import Profile from "./components/Profile";
+import Landing from "./components/Landing";
+
 const tabs = [
   { id: "dashboard", label: "📊 Dashboard" },
   { id: "daily", label: "📅 Daily" },
@@ -23,6 +25,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const { theme, setTheme } = useTheme();
+  const [showLanding, setShowLanding] = useState(true);
   // Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -69,7 +72,12 @@ function App() {
       </div>
     );
   }
-  if (!user) return <Auth />;
+  if (!user) {
+	if (showLanding) {
+		return <Landing onGetStarted={() => setShowLanding(false)} />;
+	}
+return <Auth />;
+}
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "16px" }}>
       {/* Header */}
