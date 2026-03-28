@@ -13,20 +13,13 @@ import Settings from "./components/Settings";
 import { checkTaskNotifications } from "./services/notificationChecker";
 import { subscribeToTasks } from "./services/taskService";
 
-const tabs = [
-  { id: "dashboard", label: "Dashboard", icon: "📊" },
-  { id: "daily", label: "Daily", icon: "📅" },
-  { id: "tasks", label: "Tasks", icon: "📝" },
-  { id: "pomodoro", label: "Focus", icon: "⏱" },
-  { id: "settings", label: "Settings", icon: "⚙️" },
-];
-
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showLanding, setShowLanding] = useState(true);
   const [pomodoroSettings, setPomodoroSettings] = useState({ focus: 25, break: 5 });
+  const [pendingCount, setPendingCount] = useState(0);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -51,22 +44,24 @@ function App() {
     }
   }, [user]);
 
+  // Subscribe to tasks for pending count + notifications
   useEffect(() => {
     if (!user) return;
-    let unsubscribe = subscribeToTasks(user.uid, (tasks) => {
+    const unsubscribe = subscribeToTasks(user.uid, (tasks) => {
       checkTaskNotifications(tasks);
+      const pending = tasks.filter((t) => t.status !== "completed").length;
+      setPendingCount(pending);
     });
-    const interval = setInterval(() => {
-      if (unsubscribe) unsubscribe();
-      unsubscribe = subscribeToTasks(user.uid, (tasks) => {
-        checkTaskNotifications(tasks);
-      });
-    }, 5 * 60 * 1000);
-    return () => {
-      if (unsubscribe) unsubscribe();
-      clearInterval(interval);
-    };
+    return () => unsubscribe();
   }, [user]);
+
+  const tabs = [
+    { id: "dashboard", label: "Dashboard", icon: "📊" },
+    { id: "daily", label: "Daily", icon: "📅" },
+    { id: "tasks", label: "Tasks", icon: "📝", badge: pendingCount },
+    { id: "pomodoro", label: "Focus", icon: "⏱" },
+    { id: "settings", label: "Settings", icon: "⚙️" },
+  ];
 
   if (loading) {
     return (
@@ -97,15 +92,34 @@ function App() {
         </div>
       </div>
 
-      {/* Top Navbar — visible on PC only */}
+      {/* Top Navbar — PC only */}
       <div className="navbar top-navbar">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             className={`nav-btn ${activeTab === tab.id ? "active" : ""}`}
             onClick={() => setActiveTab(tab.id)}
+            style={{ position: "relative" }}
           >
             {tab.icon} {tab.label}
+            {tab.badge > 0 && (
+              <span style={{
+                position: "absolute",
+                top: "4px",
+                right: "4px",
+                background: "var(--danger)",
+                color: "white",
+                fontSize: "10px",
+                fontWeight: "800",
+                borderRadius: "10px",
+                padding: "1px 5px",
+                minWidth: "16px",
+                textAlign: "center",
+                lineHeight: "1.4"
+              }}>
+                {tab.badge > 99 ? "99+" : tab.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -129,15 +143,34 @@ function App() {
         )}
       </div>
 
-      {/* Bottom Navbar — visible on mobile only */}
+      {/* Bottom Navbar — Mobile only */}
       <div className="bottom-navbar">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             className={`bottom-nav-btn ${activeTab === tab.id ? "active" : ""}`}
             onClick={() => setActiveTab(tab.id)}
+            style={{ position: "relative" }}
           >
             <span className="bottom-nav-icon">{tab.icon}</span>
+            {tab.badge > 0 && (
+              <span style={{
+                position: "absolute",
+                top: "0px",
+                right: "12px",
+                background: "var(--danger)",
+                color: "white",
+                fontSize: "9px",
+                fontWeight: "800",
+                borderRadius: "10px",
+                padding: "1px 4px",
+                minWidth: "14px",
+                textAlign: "center",
+                lineHeight: "1.4"
+              }}>
+                {tab.badge > 99 ? "99+" : tab.badge}
+              </span>
+            )}
             <span className="bottom-nav-label">{tab.label}</span>
           </button>
         ))}
