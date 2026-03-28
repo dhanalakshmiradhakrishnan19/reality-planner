@@ -58,11 +58,9 @@ export default function TaskList() {
 
   const handleStart = async (task) => {
     const updateData = { startedAt: new Date() };
-
     if (!task.firstStartedAt) {
       updateData.firstStartedAt = new Date();
     }
-
     await updateTask(task.id, updateData);
   };
 
@@ -97,7 +95,8 @@ export default function TaskList() {
       title: task.title,
       subject: task.subject,
       deadline: task.deadline,
-      estimatedTime: task.estimatedTime
+      estimatedTime: task.estimatedTime,
+      priority: task.priority || "medium"
     });
   };
 
@@ -106,7 +105,8 @@ export default function TaskList() {
       title: editData.title,
       subject: editData.subject,
       deadline: editData.deadline,
-      estimatedTime: Number(editData.estimatedTime)
+      estimatedTime: Number(editData.estimatedTime),
+      priority: editData.priority || "medium"
     });
     setEditingId(null);
   };
@@ -114,9 +114,16 @@ export default function TaskList() {
   return (
     <div className="task-list">
       <h2>Tasks</h2>
+      {tasks.length === 0 && (
+        <p style={{ color: "var(--text2)", fontSize: "14px", textAlign: "center", padding: "20px" }}>
+          No tasks yet. Add one above!
+        </p>
+      )}
       {tasks.map((task) => (
-        <div key={task.id} className={`task-card ${task.status === "completed" ? "completed" : ""}`}>
-
+        <div
+          key={task.id}
+          className={`task-card ${task.status === "completed" ? "completed" : ""}`}
+        >
           {/* EDIT MODE */}
           {editingId === task.id ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -145,6 +152,15 @@ export default function TaskList() {
                 onChange={(e) => setEditData({ ...editData, estimatedTime: e.target.value })}
                 placeholder="Estimated hours"
               />
+              <select
+                className="edit-input"
+                value={editData.priority || "medium"}
+                onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
+              >
+                <option value="high">🔴 High Priority</option>
+                <option value="medium">🟡 Medium Priority</option>
+                <option value="low">🟢 Low Priority</option>
+              </select>
               <div className="task-buttons">
                 <button className="btn-start" onClick={() => handleEditSave(task.id)}>💾 Save</button>
                 <button className="btn-complete" onClick={() => setEditingId(null)}>Cancel</button>
@@ -152,11 +168,18 @@ export default function TaskList() {
             </div>
 
           ) : (
+            /* NORMAL MODE */
             <>
-              <h3>{task.title} {task.status === "completed" && "✅"}</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                <h3 style={{ margin: 0 }}>{task.title} {task.status === "completed" && "✅"}</h3>
+                <PriorityBadge priority={task.priority} />
+              </div>
+
               <p className="task-meta">📚 {task.subject}</p>
               <p className="task-meta">📅 Deadline: {task.deadline}</p>
-              <p className="task-meta">🕐 Estimated: {task.estimatedTime} hrs &nbsp;|&nbsp; Actual: {(task.actualTime || 0).toFixed(2)} hrs</p>
+              <p className="task-meta">
+                🕐 Estimated: {task.estimatedTime} hrs &nbsp;|&nbsp; Actual: {(task.actualTime || 0).toFixed(2)} hrs
+              </p>
 
               {task.startedAt && liveTimes[task.id] !== undefined && (
                 <p className="task-timer">⏱ Running: {formatTime(liveTimes[task.id])}</p>
@@ -189,5 +212,27 @@ export default function TaskList() {
         </div>
       ))}
     </div>
+  );
+}
+
+function PriorityBadge({ priority }) {
+  const config = {
+    high: { label: "High", color: "#f44336", bg: "rgba(244,67,54,0.15)" },
+    medium: { label: "Medium", color: "#ff9800", bg: "rgba(255,152,0,0.15)" },
+    low: { label: "Low", color: "#4caf50", bg: "rgba(76,175,80,0.15)" }
+  };
+  const p = config[priority] || config["medium"];
+  return (
+    <span style={{
+      fontSize: "11px",
+      fontWeight: "700",
+      color: p.color,
+      background: p.bg,
+      padding: "2px 8px",
+      borderRadius: "20px",
+      whiteSpace: "nowrap"
+    }}>
+      {p.label}
+    </span>
   );
 }

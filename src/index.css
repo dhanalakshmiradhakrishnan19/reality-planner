@@ -484,3 +484,13 @@ body {
   font-weight: 600;
   margin-left: 6px;
 }
+
+@media (min-width: 600px) {
+  .task-form {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  }
+
+  .task-form button {
+    grid-column: span 1;
+  }
+}
