@@ -81,6 +81,68 @@ export default function Dashboard() {
     return `🔴 Warning: You delay starting tasks by ${avg.toFixed(1)} days on average`;
   };
 
+  const getStreaks = () => {
+    const completedWithDate = completed.filter((t) => t.completedAt);
+    if (completedWithDate.length === 0) return { current: 0, best: 0 };
+
+    // Get unique dates when tasks were completed
+    const dateSet = new Set(
+      completedWithDate.map((t) => {
+        const d = t.completedAt.toDate ? t.completedAt.toDate() : new Date(t.completedAt);
+        return d.toISOString().split("T")[0]; // "YYYY-MM-DD"
+      })
+    );
+
+    const dates = Array.from(dateSet).sort();
+
+    // Calculate best streak
+    let bestStreak = 1;
+    let tempStreak = 1;
+    for (let i = 1; i < dates.length; i++) {
+      const prev = new Date(dates[i - 1]);
+      const curr = new Date(dates[i]);
+      const diff = (curr - prev) / (1000 * 60 * 60 * 24);
+      if (diff === 1) {
+        tempStreak++;
+        bestStreak = Math.max(bestStreak, tempStreak);
+      } else {
+        tempStreak = 1;
+      }
+    }
+
+    // Calculate current streak
+    let currentStreak = 1;
+    const today = new Date().toISOString().split("T")[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    const lastDate = dates[dates.length - 1];
+
+    if (lastDate !== today && lastDate !== yesterday) {
+      currentStreak = 0;
+    } else {
+      for (let i = dates.length - 1; i > 0; i--) {
+        const prev = new Date(dates[i - 1]);
+        const curr = new Date(dates[i]);
+        const diff = (curr - prev) / (1000 * 60 * 60 * 24);
+        if (diff === 1) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+
+    return { current: currentStreak, best: bestStreak };
+  };
+
+  const { current: currentStreak, best: bestStreak } = getStreaks();
+
+  const streakInsight = () => {
+    if (currentStreak === 0) return "⚠️ No active streak — complete a task today to start one!";
+    if (currentStreak >= 7) return `🔥 Amazing! You're on a ${currentStreak}-day streak!`;
+    if (currentStreak >= 3) return `🔥 Great work! Keep going — ${currentStreak} days in a row!`;
+    return `🔥 ${currentStreak}-day streak — keep it up!`;
+  };
+
   return (
     <div>
       <div className="dashboard">
@@ -94,11 +156,19 @@ export default function Dashboard() {
           <StatCard label="On Time %" value={completedOnTimePercent()} />
           <StatCard label="Avg Start Delay" value={avgStartDelay()} />
           <StatCard label="Most Delayed Subject" value={mostDelayedSubject()} />
+          <StatCard label="🔥 Current Streak" value={`${currentStreak} days`} />
+          <StatCard label="🏆 Best Streak" value={`${bestStreak} days`} />
         </div>
 
         {startDelayInsight() && (
           <p style={{ marginTop: "16px", fontSize: "14px", fontWeight: "500" }}>
             {startDelayInsight()}
+          </p>
+        )}
+
+        {completed.length > 0 && (
+          <p style={{ marginTop: "8px", fontSize: "14px", fontWeight: "500" }}>
+            {streakInsight()}
           </p>
         )}
       </div>
