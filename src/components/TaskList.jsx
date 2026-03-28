@@ -7,6 +7,9 @@ export default function TaskList() {
   const [liveTimes, setLiveTimes] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
 
   useEffect(() => {
     const unsubscribe = subscribeToTasks(auth.currentUser.uid, (data) => {
@@ -29,6 +32,20 @@ export default function TaskList() {
     }, 1000);
     return () => clearInterval(interval);
   }, [tasks]);
+
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch =
+      task.title.toLowerCase().includes(search.toLowerCase()) ||
+      task.subject.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus =
+      filterStatus === "all" ||
+      (filterStatus === "completed" && task.status === "completed") ||
+      (filterStatus === "pending" && task.status !== "completed");
+    const matchesPriority =
+      filterPriority === "all" ||
+      (task.priority || "medium") === filterPriority;
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -58,9 +75,7 @@ export default function TaskList() {
 
   const handleStart = async (task) => {
     const updateData = { startedAt: new Date() };
-    if (!task.firstStartedAt) {
-      updateData.firstStartedAt = new Date();
-    }
+    if (!task.firstStartedAt) updateData.firstStartedAt = new Date();
     await updateTask(task.id, updateData);
   };
 
@@ -77,16 +92,11 @@ export default function TaskList() {
 
   const handleComplete = async (task) => {
     if (task.startedAt) await handleStop(task);
-    await updateTask(task.id, {
-      status: "completed",
-      completedAt: new Date()
-    });
+    await updateTask(task.id, { status: "completed", completedAt: new Date() });
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Delete this task?")) {
-      await deleteTask(id);
-    }
+    if (window.confirm("Delete this task?")) await deleteTask(id);
   };
 
   const handleEditStart = (task) => {
@@ -113,104 +123,159 @@ export default function TaskList() {
 
   return (
     <div className="task-list">
-      <h2>Tasks</h2>
-      {tasks.length === 0 && (
-        <p style={{ color: "var(--text2)", fontSize: "14px", textAlign: "center", padding: "20px" }}>
-          No tasks yet. Add one above!
-        </p>
-      )}
-      {tasks.map((task) => (
-        <div
-          key={task.id}
-          className={`task-card ${task.status === "completed" ? "completed" : ""}`}
-        >
-          {/* EDIT MODE */}
-          {editingId === task.id ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <input
-                className="edit-input"
-                value={editData.title}
-                onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                placeholder="Title"
-              />
-              <input
-                className="edit-input"
-                value={editData.subject}
-                onChange={(e) => setEditData({ ...editData, subject: e.target.value })}
-                placeholder="Subject"
-              />
-              <input
-                className="edit-input"
-                type="date"
-                value={editData.deadline}
-                onChange={(e) => setEditData({ ...editData, deadline: e.target.value })}
-              />
-              <input
-                className="edit-input"
-                type="number"
-                value={editData.estimatedTime}
-                onChange={(e) => setEditData({ ...editData, estimatedTime: e.target.value })}
-                placeholder="Estimated hours"
-              />
-              <select
-                className="edit-input"
-                value={editData.priority || "medium"}
-                onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
+
+      {/* Search & Filter Bar */}
+      <div style={{
+        background: "var(--card)",
+        borderRadius: "16px",
+        padding: "16px",
+        marginBottom: "16px",
+        border: "1px solid var(--border)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px"
+      }}>
+        <input
+          type="text"
+          placeholder="🔍 Search by title or subject..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            background: "var(--bg3)",
+            border: "1px solid var(--border)",
+            color: "var(--text)",
+            padding: "10px 14px",
+            borderRadius: "10px",
+            fontSize: "14px",
+            width: "100%"
+          }}
+        />
+
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {/* Status filters */}
+          <div style={{ display: "flex", gap: "4px" }}>
+            {["all", "pending", "completed"].map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilterStatus(s)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  background: filterStatus === s ? "var(--accent)" : "var(--bg3)",
+                  color: filterStatus === s ? "white" : "var(--text2)",
+                  transition: "all 0.2s"
+                }}
               >
-                <option value="high">🔴 High Priority</option>
-                <option value="medium">🟡 Medium Priority</option>
-                <option value="low">🟢 Low Priority</option>
-              </select>
-              <div className="task-buttons">
-                <button className="btn-start" onClick={() => handleEditSave(task.id)}>💾 Save</button>
-                <button className="btn-complete" onClick={() => setEditingId(null)}>Cancel</button>
-              </div>
-            </div>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
 
-          ) : (
-            /* NORMAL MODE */
-            <>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                <h3 style={{ margin: 0 }}>{task.title} {task.status === "completed" && "✅"}</h3>
-                <PriorityBadge priority={task.priority} />
-              </div>
+          <div style={{ width: "1px", background: "var(--border)", margin: "0 4px" }} />
 
-              <p className="task-meta">📚 {task.subject}</p>
-              <p className="task-meta">📅 Deadline: {task.deadline}</p>
-              <p className="task-meta">
-                🕐 Estimated: {task.estimatedTime} hrs &nbsp;|&nbsp; Actual: {(task.actualTime || 0).toFixed(2)} hrs
-              </p>
-
-              {task.startedAt && liveTimes[task.id] !== undefined && (
-                <p className="task-timer">⏱ Running: {formatTime(liveTimes[task.id])}</p>
-              )}
-
-              {task.actualTime > 0 && (
-                <p className="task-insight">{getInsight(task.estimatedTime, task.actualTime)}</p>
-              )}
-
-              {task.status !== "completed" && (
-                <p className="task-risk">{getRisk(task.deadline, task.estimatedTime, task.actualTime)}</p>
-              )}
-
-              <div className="task-buttons">
-                {task.status !== "completed" && (
-                  <>
-                    {!task.startedAt ? (
-                      <button className="btn-start" onClick={() => handleStart(task)}>▶ Start</button>
-                    ) : (
-                      <button className="btn-stop" onClick={() => handleStop(task)}>⏹ Stop</button>
-                    )}
-                    <button className="btn-complete" onClick={() => handleComplete(task)}>✅ Complete</button>
-                  </>
-                )}
-                <button className="btn-edit" onClick={() => handleEditStart(task)}>✏️ Edit</button>
-                <button className="btn-delete" onClick={() => handleDelete(task.id)}>🗑️ Delete</button>
-              </div>
-            </>
-          )}
+          {/* Priority filters */}
+          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+            {[
+              { value: "all", label: "All" },
+              { value: "high", label: "🔴 High" },
+              { value: "medium", label: "🟡 Medium" },
+              { value: "low", label: "🟢 Low" }
+            ].map((p) => (
+              <button
+                key={p.value}
+                onClick={() => setFilterPriority(p.value)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  background: filterPriority === p.value ? "var(--accent2)" : "var(--bg3)",
+                  color: filterPriority === p.value ? "white" : "var(--text2)",
+                  transition: "all 0.2s"
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
-      ))}
+
+        <p style={{ fontSize: "12px", color: "var(--text2)" }}>
+          Showing {filteredTasks.length} of {tasks.length} tasks
+        </p>
+      </div>
+
+      {/* Task Cards */}
+      {filteredTasks.length === 0 ? (
+        <p style={{ color: "var(--text2)", fontSize: "14px", textAlign: "center", padding: "20px" }}>
+          {tasks.length === 0 ? "No tasks yet. Add one above!" : "No tasks match your search or filter."}
+        </p>
+      ) : (
+        filteredTasks.map((task) => (
+          <div key={task.id} className={`task-card ${task.status === "completed" ? "completed" : ""}`}>
+
+            {editingId === task.id ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <input className="edit-input" value={editData.title} onChange={(e) => setEditData({ ...editData, title: e.target.value })} placeholder="Title" />
+                <input className="edit-input" value={editData.subject} onChange={(e) => setEditData({ ...editData, subject: e.target.value })} placeholder="Subject" />
+                <input className="edit-input" type="date" value={editData.deadline} onChange={(e) => setEditData({ ...editData, deadline: e.target.value })} />
+                <input className="edit-input" type="number" value={editData.estimatedTime} onChange={(e) => setEditData({ ...editData, estimatedTime: e.target.value })} placeholder="Estimated hours" />
+                <select className="edit-input" value={editData.priority || "medium"} onChange={(e) => setEditData({ ...editData, priority: e.target.value })}>
+                  <option value="high">🔴 High Priority</option>
+                  <option value="medium">🟡 Medium Priority</option>
+                  <option value="low">🟢 Low Priority</option>
+                </select>
+                <div className="task-buttons">
+                  <button className="btn-start" onClick={() => handleEditSave(task.id)}>💾 Save</button>
+                  <button className="btn-complete" onClick={() => setEditingId(null)}>Cancel</button>
+                </div>
+              </div>
+
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                  <h3 style={{ margin: 0 }}>{task.title} {task.status === "completed" && "✅"}</h3>
+                  <PriorityBadge priority={task.priority} />
+                </div>
+                <p className="task-meta">📚 {task.subject}</p>
+                <p className="task-meta">📅 Deadline: {task.deadline}</p>
+                <p className="task-meta">🕐 Estimated: {task.estimatedTime} hrs &nbsp;|&nbsp; Actual: {(task.actualTime || 0).toFixed(2)} hrs</p>
+
+                {task.startedAt && liveTimes[task.id] !== undefined && (
+                  <p className="task-timer">⏱ Running: {formatTime(liveTimes[task.id])}</p>
+                )}
+                {task.actualTime > 0 && (
+                  <p className="task-insight">{getInsight(task.estimatedTime, task.actualTime)}</p>
+                )}
+                {task.status !== "completed" && (
+                  <p className="task-risk">{getRisk(task.deadline, task.estimatedTime, task.actualTime)}</p>
+                )}
+
+                <div className="task-buttons">
+                  {task.status !== "completed" && (
+                    <>
+                      {!task.startedAt ? (
+                        <button className="btn-start" onClick={() => handleStart(task)}>▶ Start</button>
+                      ) : (
+                        <button className="btn-stop" onClick={() => handleStop(task)}>⏹ Stop</button>
+                      )}
+                      <button className="btn-complete" onClick={() => handleComplete(task)}>✅ Complete</button>
+                    </>
+                  )}
+                  <button className="btn-edit" onClick={() => handleEditStart(task)}>✏️ Edit</button>
+                  <button className="btn-delete" onClick={() => handleDelete(task.id)}>🗑️ Delete</button>
+                </div>
+              </>
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 }
