@@ -12,6 +12,7 @@ import Landing from "./components/Landing";
 import Settings from "./components/Settings";
 import { checkTaskNotifications } from "./services/notificationChecker";
 import { subscribeToTasks } from "./services/taskService";
+import Onboarding from "./components/Onboarding";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -20,15 +21,20 @@ function App() {
   const [showLanding, setShowLanding] = useState(true);
   const [pomodoroSettings, setPomodoroSettings] = useState({ focus: 25, break: 5 });
   const [pendingCount, setPendingCount] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { theme } = useTheme();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    setUser(currentUser);
+    setLoading(false);
+    if (currentUser) {
+      const done = localStorage.getItem("onboarding_done");
+      if (!done) setShowOnboarding(true);
+    }
+  });
+  return () => unsubscribe();
+}, []);
 
   useEffect(() => {
     if (!user) return;
@@ -77,6 +83,9 @@ function App() {
     }
     return <Auth />;
   }
+if (showOnboarding) {
+  return <Onboarding onDone={() => setShowOnboarding(false)} />;
+}
 
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "16px", paddingBottom: "80px" }}>
