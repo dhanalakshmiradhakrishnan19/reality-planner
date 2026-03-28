@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { subscribeToTasks } from "../services/taskService";
 import { auth } from "../services/firebase";
+import ProgressChart from "./ProgressChart";
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -81,24 +82,28 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="dashboard">
-      <h2>📊 Dashboard</h2>
-      <div className="stat-grid">
-        <StatCard label="Total Tasks" value={tasks.length} />
-        <StatCard label="Completed" value={completed.length} />
-        <StatCard label="Pending" value={pending.length} />
-        <StatCard label="Avg Accuracy" value={avgAccuracy()} />
-        <StatCard label="Missed Deadlines" value={missedDeadlines()} />
-        <StatCard label="On Time %" value={completedOnTimePercent()} />
-        <StatCard label="Avg Start Delay" value={avgStartDelay()} />
-        <StatCard label="Most Delayed Subject" value={mostDelayedSubject()} />
+    <div>
+      <div className="dashboard">
+        <h2>📊 Dashboard</h2>
+        <div className="stat-grid">
+          <StatCard label="Total Tasks" value={tasks.length} />
+          <StatCard label="Completed" value={completed.length} />
+          <StatCard label="Pending" value={pending.length} />
+          <StatCard label="Avg Accuracy" value={avgAccuracy()} />
+          <StatCard label="Missed Deadlines" value={missedDeadlines()} />
+          <StatCard label="On Time %" value={completedOnTimePercent()} />
+          <StatCard label="Avg Start Delay" value={avgStartDelay()} />
+          <StatCard label="Most Delayed Subject" value={mostDelayedSubject()} />
+        </div>
+
+        {startDelayInsight() && (
+          <p style={{ marginTop: "16px", fontSize: "14px", fontWeight: "500" }}>
+            {startDelayInsight()}
+          </p>
+        )}
       </div>
 
-      {startDelayInsight() && (
-        <p style={{ marginTop: "16px", fontSize: "14px", fontWeight: "500" }}>
-          {startDelayInsight()}
-        </p>
-      )}
+      <ProgressChart tasks={tasks} />
     </div>
   );
 }
