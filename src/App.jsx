@@ -8,24 +8,27 @@ import Dashboard from "./components/Dashboard";
 import DailyPlan from "./components/DailyPlan";
 import Pomodoro from "./components/Pomodoro";
 import Auth from "./components/Auth";
+import Landing from "./components/Landing";
+import Settings from "./components/Settings";
 import { checkTaskNotifications } from "./services/notificationChecker";
 import { subscribeToTasks } from "./services/taskService";
-import Profile from "./components/Profile";
-import Landing from "./components/Landing";
 
 const tabs = [
   { id: "dashboard", label: "📊 Dashboard" },
   { id: "daily", label: "📅 Daily" },
   { id: "tasks", label: "📝 Tasks" },
-  { id: "pomodoro", label: " Focus" },
-  { id: "profile", label: "👤 Profile" },
+  { id: "pomodoro", label: "Focus" },
+  { id: "settings", label: "⚙️ Settings" },
 ];
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
-  const { theme, setTheme } = useTheme();
   const [showLanding, setShowLanding] = useState(true);
+  const [pomodoroSettings, setPomodoroSettings] = useState({ focus: 25, break: 5 });
+  const { theme } = useTheme();
+
   // Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -34,6 +37,7 @@ function App() {
     });
     return () => unsubscribe();
   }, []);
+
   // Request notification permission on login
   useEffect(() => {
     if (!user) return;
@@ -48,6 +52,7 @@ function App() {
       });
     }
   }, [user]);
+
   // Check notifications every 5 minutes
   useEffect(() => {
     if (!user) return;
@@ -65,6 +70,7 @@ function App() {
       clearInterval(interval);
     };
   }, [user]);
+
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -72,36 +78,28 @@ function App() {
       </div>
     );
   }
+
   if (!user) {
-	if (showLanding) {
-		return <Landing onGetStarted={() => setShowLanding(false)} />;
-	}
-return <Auth />;
-}
+    if (showLanding) {
+      return <Landing onGetStarted={() => setShowLanding(false)} />;
+    }
+    return <Auth />;
+  }
+
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "16px" }}>
+
       {/* Header */}
       <div className="app-header">
         <span className="app-title">📱 Reality Planner</span>
         <div className="header-right">
-          {/* Theme Switcher */}
-          <div className="theme-selector">
-            {["system", "light", "dark"].map((t) => (
-              <button
-                key={t}
-                className={`theme-btn ${theme === t ? "active" : ""}`}
-                onClick={() => setTheme(t)}
-              >
-                {t === "system" ? "⚙️" : t === "light" ? "☀️" : "🌙"}
-              </button>
-            ))}
-          </div>
           <span className="user-email">{user.email}</span>
           <button className="signout-btn" onClick={() => signOut(auth)}>
             Sign Out
           </button>
         </div>
       </div>
+
       {/* Navbar */}
       <div className="navbar">
         {tabs.map((tab) => (
@@ -114,6 +112,7 @@ return <Auth />;
           </button>
         ))}
       </div>
+
       {/* Content */}
       {activeTab === "dashboard" && <Dashboard />}
       {activeTab === "daily" && <DailyPlan />}
@@ -123,9 +122,15 @@ return <Auth />;
           <TaskList />
         </div>
       )}
-      {activeTab === "pomodoro" && <Pomodoro />}
-      {activeTab === "profile" && <Profile />}
+      {activeTab === "pomodoro" && <Pomodoro pomodoroSettings={pomodoroSettings} />}
+      {activeTab === "settings" && (
+        <Settings
+          pomodoroSettings={pomodoroSettings}
+          setPomodoroSettings={setPomodoroSettings}
+        />
+      )}
     </div>
   );
 }
+
 export default App;
