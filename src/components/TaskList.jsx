@@ -12,6 +12,7 @@ export default function TaskList() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
+  const [sortBy, setSortBy] = useState("pinned");
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -36,10 +37,26 @@ export default function TaskList() {
     return () => clearInterval(interval);
   }, [tasks]);
 
-  // Sort: pinned first, then by priority, then rest
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+
   const sortedTasks = [...tasks].sort((a, b) => {
+    // Pinned always first
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
+
+    if (sortBy === "deadline") {
+      return new Date(a.deadline) - new Date(b.deadline);
+    } else if (sortBy === "priority") {
+      return (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1);
+    } else if (sortBy === "newest") {
+      const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return bDate - aDate;
+    } else if (sortBy === "oldest") {
+      const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return aDate - bDate;
+    }
     return 0;
   });
 
@@ -133,8 +150,6 @@ export default function TaskList() {
     if (task.startedAt) await handleStop(task);
     await updateTask(task.id, { status: "completed", completedAt: new Date() });
     showToast("Task completed! 🎉", "success");
-
-    // Confetti animation
     confetti({
       particleCount: 120,
       spread: 80,
@@ -186,6 +201,7 @@ export default function TaskList() {
         flexDirection: "column",
         gap: "10px"
       }}>
+        {/* Search */}
         <input
           type="text"
           placeholder="🔍 Search by title or subject..."
@@ -202,6 +218,7 @@ export default function TaskList() {
           }}
         />
 
+        {/* Status filters */}
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", gap: "4px" }}>
             {["all", "pending", "completed"].map((s) => (
@@ -219,6 +236,7 @@ export default function TaskList() {
 
           <div style={{ width: "1px", background: "var(--border)", margin: "0 4px" }} />
 
+          {/* Priority filters */}
           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
             {[
               { value: "all", label: "All" },
@@ -239,18 +257,48 @@ export default function TaskList() {
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <p style={{ fontSize: "12px", color: "var(--text2)" }}>
-            Showing {filteredTasks.length} of {tasks.length} tasks
-          </p>
+        {/* Sort dropdown + Export */}
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1 }}>
+            <span style={{ fontSize: "12px", color: "var(--text2)", fontWeight: "600", whiteSpace: "nowrap" }}>
+              🔄 Sort:
+            </span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                background: "var(--bg3)",
+                border: "1px solid var(--border)",
+                color: "var(--text)",
+                padding: "6px 10px",
+                borderRadius: "8px",
+                fontSize: "12px",
+                fontWeight: "600",
+                cursor: "pointer",
+                flex: 1
+              }}
+            >
+              <option value="pinned">📌 Pinned First</option>
+              <option value="deadline">📅 Deadline (Soonest)</option>
+              <option value="priority">🔴 Priority (High First)</option>
+              <option value="newest">🆕 Newest First</option>
+              <option value="oldest">🕐 Oldest First</option>
+            </select>
+          </div>
+
           <button onClick={exportToCSV} style={{
             background: "linear-gradient(135deg, var(--accent), var(--accent2))",
             color: "white", border: "none", padding: "8px 16px",
-            borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer"
+            borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer",
+            whiteSpace: "nowrap"
           }}>
-            📤 Export to CSV
+            📤 Export
           </button>
         </div>
+
+        <p style={{ fontSize: "12px", color: "var(--text2)" }}>
+          Showing {filteredTasks.length} of {tasks.length} tasks
+        </p>
       </div>
 
       {/* Task Cards */}
@@ -262,8 +310,7 @@ export default function TaskList() {
         filteredTasks.map((task) => (
           <div key={task.id} className={`task-card ${task.status === "completed" ? "completed" : ""}`}
             style={{
-              borderLeft: task.pinned ? "4px solid var(--accent2)" : undefined,
-              background: task.pinned ? "var(--card)" : undefined
+              borderLeft: task.pinned ? "4px solid var(--accent2)" : undefined
             }}
           >
             {editingId === task.id ? (
@@ -285,11 +332,8 @@ export default function TaskList() {
 
             ) : (
               <>
-                {/* Title row with pin indicator */}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                  {task.pinned && (
-                    <span style={{ fontSize: "14px" }} title="Pinned">📌</span>
-                  )}
+                  {task.pinned && <span style={{ fontSize: "14px" }}>📌</span>}
                   <h3 style={{ margin: 0 }}>{task.title} {task.status === "completed" && "✅"}</h3>
                   <PriorityBadge priority={task.priority} />
                 </div>
@@ -322,12 +366,8 @@ export default function TaskList() {
                   <button
                     onClick={() => handlePin(task)}
                     style={{
-                      padding: "7px 11px",
-                      borderRadius: "8px",
-                      border: "none",
-                      fontSize: "11px",
-                      fontWeight: "700",
-                      cursor: "pointer",
+                      padding: "7px 11px", borderRadius: "8px", border: "none",
+                      fontSize: "11px", fontWeight: "700", cursor: "pointer",
                       background: task.pinned ? "rgba(255,107,157,0.2)" : "var(--bg3)",
                       color: task.pinned ? "var(--accent2)" : "var(--text2)"
                     }}
