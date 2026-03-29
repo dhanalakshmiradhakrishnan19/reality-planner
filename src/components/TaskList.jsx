@@ -4,6 +4,15 @@ import { auth } from "../services/firebase";
 import { useToast } from "../context/ToastContext";
 import confetti from "canvas-confetti";
 
+function isOverdue(task) {
+  if (task.status === "completed") return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(task.deadline);
+  due.setHours(0, 0, 0, 0);
+  return due < today;
+}
+
 export default function TaskList() {
   const [tasks, setTasks] = useState([]);
   const [liveTimes, setLiveTimes] = useState({});
@@ -298,137 +307,162 @@ export default function TaskList() {
           {tasks.length === 0 ? "No tasks yet. Add one above!" : "No tasks match your search or filter."}
         </p>
       ) : (
-        filteredTasks.map((task) => (
-          <div key={task.id} className={`task-card ${task.status === "completed" ? "completed" : ""}`}
-            style={{ borderLeft: task.pinned ? "4px solid var(--accent2)" : undefined }}
-          >
-            {editingId === task.id ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <input className="edit-input" value={editData.title} onChange={(e) => setEditData({ ...editData, title: e.target.value })} placeholder="Title" />
-                <input className="edit-input" value={editData.subject} onChange={(e) => setEditData({ ...editData, subject: e.target.value })} placeholder="Subject" />
-                <input className="edit-input" type="date" value={editData.deadline} onChange={(e) => setEditData({ ...editData, deadline: e.target.value })} />
-                <input className="edit-input" type="number" value={editData.estimatedTime} onChange={(e) => setEditData({ ...editData, estimatedTime: e.target.value })} placeholder="Estimated hours" />
-                <select className="edit-input" value={editData.priority || "medium"} onChange={(e) => setEditData({ ...editData, priority: e.target.value })}>
-                  <option value="high">🔴 High Priority</option>
-                  <option value="medium">🟡 Medium Priority</option>
-                  <option value="low">🟢 Low Priority</option>
-                </select>
-                <textarea
-                  className="edit-input"
-                  value={editData.notes || ""}
-                  onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
-                  placeholder="Notes (optional)..."
-                  rows={3}
-                  style={{ resize: "vertical", fontFamily: "inherit" }}
-                />
-                <div className="task-buttons">
-                  <button className="btn-start" onClick={() => handleEditSave(task.id)}>💾 Save</button>
-                  <button className="btn-complete" onClick={() => setEditingId(null)}>Cancel</button>
-                </div>
-              </div>
-
-            ) : (
-              <>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                  {task.pinned && <span style={{ fontSize: "14px" }}>📌</span>}
-                  <h3 style={{ margin: 0 }}>{task.title} {task.status === "completed" && "✅"}</h3>
-                  <PriorityBadge priority={task.priority} />
-                  {task.notes && (
-                    <span style={{
-                      fontSize: "11px", color: "var(--accent)", background: "rgba(124,107,255,0.1)",
-                      padding: "2px 6px", borderRadius: "6px", fontWeight: "600"
-                    }}>📝</span>
-                  )}
+        filteredTasks.map((task) => {
+          const overdue = isOverdue(task);
+          return (
+            <div
+              key={task.id}
+              className={`task-card ${task.status === "completed" ? "completed" : ""}`}
+              style={{
+                borderLeft: task.pinned
+                  ? "4px solid var(--accent2)"
+                  : overdue
+                  ? "4px solid #f44336"
+                  : undefined,
+                background: overdue ? "rgba(244,67,54,0.05)" : undefined
+              }}
+            >
+              {editingId === task.id ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <input className="edit-input" value={editData.title} onChange={(e) => setEditData({ ...editData, title: e.target.value })} placeholder="Title" />
+                  <input className="edit-input" value={editData.subject} onChange={(e) => setEditData({ ...editData, subject: e.target.value })} placeholder="Subject" />
+                  <input className="edit-input" type="date" value={editData.deadline} onChange={(e) => setEditData({ ...editData, deadline: e.target.value })} />
+                  <input className="edit-input" type="number" value={editData.estimatedTime} onChange={(e) => setEditData({ ...editData, estimatedTime: e.target.value })} placeholder="Estimated hours" />
+                  <select className="edit-input" value={editData.priority || "medium"} onChange={(e) => setEditData({ ...editData, priority: e.target.value })}>
+                    <option value="high">🔴 High Priority</option>
+                    <option value="medium">🟡 Medium Priority</option>
+                    <option value="low">🟢 Low Priority</option>
+                  </select>
+                  <textarea
+                    className="edit-input"
+                    value={editData.notes || ""}
+                    onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                    placeholder="Notes (optional)..."
+                    rows={3}
+                    style={{ resize: "vertical", fontFamily: "inherit" }}
+                  />
+                  <div className="task-buttons">
+                    <button className="btn-start" onClick={() => handleEditSave(task.id)}>💾 Save</button>
+                    <button className="btn-complete" onClick={() => setEditingId(null)}>Cancel</button>
+                  </div>
                 </div>
 
-                <p className="task-meta">📚 {task.subject}</p>
-                <p className="task-meta">📅 Deadline: {task.deadline}</p>
-                <p className="task-meta">🕐 Estimated: {task.estimatedTime} hrs &nbsp;|&nbsp; Actual: {(task.actualTime || 0).toFixed(2)} hrs</p>
-
-                {/* Progress Bar */}
-                <ProgressBar estimated={task.estimatedTime} actual={task.actualTime || 0} isRunning={!!task.startedAt} liveSeconds={liveTimes[task.id]} />
-
-                {/* Notes expandable section */}
-                {task.notes && (
-                  <div style={{ marginTop: "8px" }}>
-                    <button
-                      onClick={() => toggleNotes(task.id)}
-                      style={{
-                        background: "transparent", border: "none",
-                        color: "var(--accent)", fontSize: "12px",
-                        fontWeight: "700", cursor: "pointer", padding: "0"
-                      }}
-                    >
-                      {expandedNotes[task.id] ? "▲ Hide Notes" : "▼ Show Notes"}
-                    </button>
-                    {expandedNotes[task.id] && (
-                      <div style={{
-                        marginTop: "8px",
-                        background: "var(--bg3)",
-                        borderRadius: "8px",
-                        padding: "10px 14px",
-                        fontSize: "13px",
-                        color: "var(--text2)",
-                        lineHeight: "1.6",
-                        whiteSpace: "pre-wrap",
-                        border: "1px solid var(--border)"
+              ) : (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
+                    {task.pinned && <span style={{ fontSize: "14px" }}>📌</span>}
+                    <h3 style={{ margin: 0 }}>{task.title} {task.status === "completed" && "✅"}</h3>
+                    <PriorityBadge priority={task.priority} />
+                    {task.notes && (
+                      <span style={{
+                        fontSize: "11px", color: "var(--accent)", background: "rgba(124,107,255,0.1)",
+                        padding: "2px 6px", borderRadius: "6px", fontWeight: "600"
+                      }}>📝</span>
+                    )}
+                    {overdue && (
+                      <span style={{
+                        fontSize: "11px", fontWeight: "700", color: "#f44336",
+                        background: "rgba(244,67,54,0.15)", padding: "2px 8px",
+                        borderRadius: "20px", whiteSpace: "nowrap"
                       }}>
-                        {task.notes}
-                      </div>
+                        ⚠️ Overdue
+                      </span>
                     )}
                   </div>
-                )}
 
-                {task.startedAt && liveTimes[task.id] !== undefined && (
-                  <p className="task-timer">⏱ Running: {formatTime(liveTimes[task.id])}</p>
-                )}
-                {task.actualTime > 0 && (
-                  <p className="task-insight">{getInsight(task.estimatedTime, task.actualTime)}</p>
-                )}
-                {task.status !== "completed" && (
-                  <p className="task-risk">{getRisk(task.deadline, task.estimatedTime, task.actualTime)}</p>
-                )}
+                  <p className="task-meta">📚 {task.subject}</p>
+                  <p className="task-meta" style={{ color: overdue ? "#f44336" : undefined, fontWeight: overdue ? "700" : undefined }}>
+                    📅 Deadline: {task.deadline}
+                  </p>
+                  <p className="task-meta">🕐 Estimated: {task.estimatedTime} hrs &nbsp;|&nbsp; Actual: {(task.actualTime || 0).toFixed(2)} hrs</p>
 
-                <div className="task-buttons">
-                  {task.status !== "completed" && (
-                    <>
-                      {!task.startedAt ? (
-                        <button className="btn-start" onClick={() => handleStart(task)}>▶ Start</button>
-                      ) : (
-                        <button className="btn-stop" onClick={() => handleStop(task)}>⏹ Stop</button>
+                  {/* Progress Bar */}
+                  <ProgressBar
+                    estimated={task.estimatedTime}
+                    actual={task.actualTime || 0}
+                    isRunning={!!task.startedAt}
+                    liveSeconds={liveTimes[task.id]}
+                  />
+
+                  {/* Notes expandable section */}
+                  {task.notes && (
+                    <div style={{ marginTop: "8px" }}>
+                      <button
+                        onClick={() => toggleNotes(task.id)}
+                        style={{
+                          background: "transparent", border: "none",
+                          color: "var(--accent)", fontSize: "12px",
+                          fontWeight: "700", cursor: "pointer", padding: "0"
+                        }}
+                      >
+                        {expandedNotes[task.id] ? "▲ Hide Notes" : "▼ Show Notes"}
+                      </button>
+                      {expandedNotes[task.id] && (
+                        <div style={{
+                          marginTop: "8px",
+                          background: "var(--bg3)",
+                          borderRadius: "8px",
+                          padding: "10px 14px",
+                          fontSize: "13px",
+                          color: "var(--text2)",
+                          lineHeight: "1.6",
+                          whiteSpace: "pre-wrap",
+                          border: "1px solid var(--border)"
+                        }}>
+                          {task.notes}
+                        </div>
                       )}
-                      <button className="btn-complete" onClick={() => handleComplete(task)}>✅ Complete</button>
-                    </>
+                    </div>
                   )}
-                  <button onClick={() => handlePin(task)} style={{
-                    padding: "7px 11px", borderRadius: "8px", border: "none",
-                    fontSize: "11px", fontWeight: "700", cursor: "pointer",
-                    background: task.pinned ? "rgba(255,107,157,0.2)" : "var(--bg3)",
-                    color: task.pinned ? "var(--accent2)" : "var(--text2)"
-                  }}>
-                    {task.pinned ? "📌 Pinned" : "📌 Pin"}
-                  </button>
-                  <button className="btn-edit" onClick={() => handleEditStart(task)}>✏️ Edit</button>
-                  <button className="btn-delete" onClick={() => handleDelete(task.id)}>🗑️ Delete</button>
-                </div>
-              </>
-            )}
-          </div>
-        ))
+
+                  {task.startedAt && liveTimes[task.id] !== undefined && (
+                    <p className="task-timer">⏱ Running: {formatTime(liveTimes[task.id])}</p>
+                  )}
+                  {task.actualTime > 0 && (
+                    <p className="task-insight">{getInsight(task.estimatedTime, task.actualTime)}</p>
+                  )}
+                  {task.status !== "completed" && (
+                    <p className="task-risk">{getRisk(task.deadline, task.estimatedTime, task.actualTime)}</p>
+                  )}
+
+                  <div className="task-buttons">
+                    {task.status !== "completed" && (
+                      <>
+                        {!task.startedAt ? (
+                          <button className="btn-start" onClick={() => handleStart(task)}>▶ Start</button>
+                        ) : (
+                          <button className="btn-stop" onClick={() => handleStop(task)}>⏹ Stop</button>
+                        )}
+                        <button className="btn-complete" onClick={() => handleComplete(task)}>✅ Complete</button>
+                      </>
+                    )}
+                    <button onClick={() => handlePin(task)} style={{
+                      padding: "7px 11px", borderRadius: "8px", border: "none",
+                      fontSize: "11px", fontWeight: "700", cursor: "pointer",
+                      background: task.pinned ? "rgba(255,107,157,0.2)" : "var(--bg3)",
+                      color: task.pinned ? "var(--accent2)" : "var(--text2)"
+                    }}>
+                      {task.pinned ? "📌 Pinned" : "📌 Pin"}
+                    </button>
+                    <button className="btn-edit" onClick={() => handleEditStart(task)}>✏️ Edit</button>
+                    <button className="btn-delete" onClick={() => handleDelete(task.id)}>🗑️ Delete</button>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })
       )}
     </div>
   );
 }
 
 function ProgressBar({ estimated, actual, isRunning, liveSeconds }) {
-  // Add live running seconds on top of stored actual hours
   const liveHours = isRunning && liveSeconds ? liveSeconds / 3600 : 0;
   const totalActual = actual + liveHours;
-
   const percent = estimated > 0 ? (totalActual / estimated) * 100 : 0;
   const displayPercent = Math.min(percent, 100);
 
-  // Color: green < 75%, yellow 75-100%, red > 100%
   const barColor =
     percent > 100 ? "#f44336" :
     percent >= 75 ? "#ff9800" :
@@ -447,40 +481,23 @@ function ProgressBar({ estimated, actual, isRunning, liveSeconds }) {
         display: "flex", justifyContent: "space-between",
         alignItems: "center", marginBottom: "5px"
       }}>
-        <span style={{ fontSize: "11px", fontWeight: "700", color: "var(--text2)" }}>
-          ⏳ Progress
-        </span>
-        <span style={{
-          fontSize: "11px", fontWeight: "700",
-          color: barColor
-        }}>
-          {label}
-        </span>
+        <span style={{ fontSize: "11px", fontWeight: "700", color: "var(--text2)" }}>⏳ Progress</span>
+        <span style={{ fontSize: "11px", fontWeight: "700", color: barColor }}>{label}</span>
       </div>
-      {/* Track */}
       <div style={{
         width: "100%", height: "7px",
-        background: "var(--bg3)",
-        borderRadius: "99px",
-        overflow: "hidden",
-        border: "1px solid var(--border)"
+        background: "var(--bg3)", borderRadius: "99px",
+        overflow: "hidden", border: "1px solid var(--border)"
       }}>
-        {/* Fill */}
         <div style={{
-          width: `${displayPercent}%`,
-          height: "100%",
-          background: barColor,
-          borderRadius: "99px",
+          width: `${displayPercent}%`, height: "100%",
+          background: barColor, borderRadius: "99px",
           transition: "width 1s linear",
           boxShadow: isRunning ? `0 0 6px ${barColor}` : "none"
         }} />
       </div>
-      {/* Over-estimate overflow indicator */}
       {percent > 100 && (
-        <p style={{
-          fontSize: "11px", color: "#f44336", fontWeight: "700",
-          marginTop: "4px"
-        }}>
+        <p style={{ fontSize: "11px", color: "#f44336", fontWeight: "700", marginTop: "4px" }}>
           ⚠️ {(totalActual - estimated).toFixed(2)} hrs over estimate
         </p>
       )}
