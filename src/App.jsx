@@ -134,23 +134,13 @@ if (showOnboarding) {
       </div>
 
       {/* Content */}
-      <div>
-        {activeTab === "dashboard" && <Dashboard />}
-        {activeTab === "daily" && <DailyPlan />}
-        {activeTab === "tasks" && (
-          <div>
-            <TaskForm />
-            <TaskList />
-          </div>
-        )}
-        {activeTab === "pomodoro" && <Pomodoro pomodoroSettings={pomodoroSettings} />}
-        {activeTab === "settings" && (
-          <Settings
-            pomodoroSettings={pomodoroSettings}
-            setPomodoroSettings={setPomodoroSettings}
-          />
-        )}
-      </div>
+<div key={activeTab} className="page-transition">
+  {activeTab === "dashboard" && <Dashboard />}
+  {activeTab === "daily" && <DailyPlan />}
+  {activeTab === "tasks" && <> <TaskForm /> <TaskList /> </>}
+  {activeTab === "pomodoro" && <Pomodoro pomodoroSettings={pomodoroSettings} />}
+  {activeTab === "settings" && <Settings pomodoroSettings={pomodoroSettings} setPomodoroSettings={setPomodoroSettings} />}
+</div>
 
       {/* Bottom Navbar — Mobile only */}
       <div className="bottom-navbar">
