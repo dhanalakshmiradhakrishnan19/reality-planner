@@ -13,6 +13,7 @@ export default function TaskList() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
   const [sortBy, setSortBy] = useState("pinned");
+  const [expandedNotes, setExpandedNotes] = useState({});
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -40,19 +41,16 @@ export default function TaskList() {
   const priorityOrder = { high: 0, medium: 1, low: 2 };
 
   const sortedTasks = [...tasks].sort((a, b) => {
-    // Pinned always first
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
-
-    if (sortBy === "deadline") {
-      return new Date(a.deadline) - new Date(b.deadline);
-    } else if (sortBy === "priority") {
-      return (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1);
-    } else if (sortBy === "newest") {
+    if (sortBy === "deadline") return new Date(a.deadline) - new Date(b.deadline);
+    if (sortBy === "priority") return (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1);
+    if (sortBy === "newest") {
       const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
       const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
       return bDate - aDate;
-    } else if (sortBy === "oldest") {
+    }
+    if (sortBy === "oldest") {
       const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
       const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
       return aDate - bDate;
@@ -63,7 +61,8 @@ export default function TaskList() {
   const filteredTasks = sortedTasks.filter((task) => {
     const matchesSearch =
       task.title.toLowerCase().includes(search.toLowerCase()) ||
-      task.subject.toLowerCase().includes(search.toLowerCase());
+      task.subject.toLowerCase().includes(search.toLowerCase()) ||
+      (task.notes || "").toLowerCase().includes(search.toLowerCase());
     const matchesStatus =
       filterStatus === "all" ||
       (filterStatus === "completed" && task.status === "completed") ||
@@ -75,13 +74,14 @@ export default function TaskList() {
   });
 
   const exportToCSV = () => {
-    const headers = ["Title", "Subject", "Deadline", "Priority", "Estimated Hours", "Actual Hours", "Status"];
+    const headers = ["Title", "Subject", "Deadline", "Priority", "Estimated Hours", "Actual Hours", "Status", "Notes"];
     const rows = tasks.map((t) => [
       t.title, t.subject, t.deadline,
       t.priority || "medium",
       t.estimatedTime,
       (t.actualTime || 0).toFixed(2),
-      t.status
+      t.status,
+      t.notes || ""
     ]);
     const csvContent = [headers, ...rows]
       .map((row) => row.map((cell) => `"${cell}"`).join(","))
@@ -94,6 +94,10 @@ export default function TaskList() {
     a.click();
     URL.revokeObjectURL(url);
     showToast("Tasks exported to CSV!", "success");
+  };
+
+  const toggleNotes = (id) => {
+    setExpandedNotes((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const formatTime = (seconds) => {
@@ -171,7 +175,8 @@ export default function TaskList() {
       subject: task.subject,
       deadline: task.deadline,
       estimatedTime: task.estimatedTime,
-      priority: task.priority || "medium"
+      priority: task.priority || "medium",
+      notes: task.notes || ""
     });
   };
 
@@ -181,7 +186,8 @@ export default function TaskList() {
       subject: editData.subject,
       deadline: editData.deadline,
       estimatedTime: Number(editData.estimatedTime),
-      priority: editData.priority || "medium"
+      priority: editData.priority || "medium",
+      notes: editData.notes || ""
     });
     setEditingId(null);
     showToast("Task updated!", "success");
@@ -201,10 +207,9 @@ export default function TaskList() {
         flexDirection: "column",
         gap: "10px"
       }}>
-        {/* Search */}
         <input
           type="text"
-          placeholder="🔍 Search by title or subject..."
+          placeholder="🔍 Search by title, subject or notes..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
@@ -218,7 +223,6 @@ export default function TaskList() {
           }}
         />
 
-        {/* Status filters */}
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", gap: "4px" }}>
             {["all", "pending", "completed"].map((s) => (
@@ -233,10 +237,7 @@ export default function TaskList() {
               </button>
             ))}
           </div>
-
           <div style={{ width: "1px", background: "var(--border)", margin: "0 4px" }} />
-
-          {/* Priority filters */}
           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
             {[
               { value: "all", label: "All" },
@@ -257,25 +258,16 @@ export default function TaskList() {
           </div>
         </div>
 
-        {/* Sort dropdown + Export */}
         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1 }}>
-            <span style={{ fontSize: "12px", color: "var(--text2)", fontWeight: "600", whiteSpace: "nowrap" }}>
-              🔄 Sort:
-            </span>
+            <span style={{ fontSize: "12px", color: "var(--text2)", fontWeight: "600", whiteSpace: "nowrap" }}>🔄 Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               style={{
-                background: "var(--bg3)",
-                border: "1px solid var(--border)",
-                color: "var(--text)",
-                padding: "6px 10px",
-                borderRadius: "8px",
-                fontSize: "12px",
-                fontWeight: "600",
-                cursor: "pointer",
-                flex: 1
+                background: "var(--bg3)", border: "1px solid var(--border)",
+                color: "var(--text)", padding: "6px 10px", borderRadius: "8px",
+                fontSize: "12px", fontWeight: "600", cursor: "pointer", flex: 1
               }}
             >
               <option value="pinned">📌 Pinned First</option>
@@ -285,12 +277,11 @@ export default function TaskList() {
               <option value="oldest">🕐 Oldest First</option>
             </select>
           </div>
-
           <button onClick={exportToCSV} style={{
             background: "linear-gradient(135deg, var(--accent), var(--accent2))",
             color: "white", border: "none", padding: "8px 16px",
-            borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer",
-            whiteSpace: "nowrap"
+            borderRadius: "8px", fontSize: "12px", fontWeight: "700",
+            cursor: "pointer", whiteSpace: "nowrap"
           }}>
             📤 Export
           </button>
@@ -309,9 +300,7 @@ export default function TaskList() {
       ) : (
         filteredTasks.map((task) => (
           <div key={task.id} className={`task-card ${task.status === "completed" ? "completed" : ""}`}
-            style={{
-              borderLeft: task.pinned ? "4px solid var(--accent2)" : undefined
-            }}
+            style={{ borderLeft: task.pinned ? "4px solid var(--accent2)" : undefined }}
           >
             {editingId === task.id ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -324,6 +313,14 @@ export default function TaskList() {
                   <option value="medium">🟡 Medium Priority</option>
                   <option value="low">🟢 Low Priority</option>
                 </select>
+                <textarea
+                  className="edit-input"
+                  value={editData.notes || ""}
+                  onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                  placeholder="Notes (optional)..."
+                  rows={3}
+                  style={{ resize: "vertical", fontFamily: "inherit" }}
+                />
                 <div className="task-buttons">
                   <button className="btn-start" onClick={() => handleEditSave(task.id)}>💾 Save</button>
                   <button className="btn-complete" onClick={() => setEditingId(null)}>Cancel</button>
@@ -336,11 +333,48 @@ export default function TaskList() {
                   {task.pinned && <span style={{ fontSize: "14px" }}>📌</span>}
                   <h3 style={{ margin: 0 }}>{task.title} {task.status === "completed" && "✅"}</h3>
                   <PriorityBadge priority={task.priority} />
+                  {task.notes && (
+                    <span style={{
+                      fontSize: "11px", color: "var(--accent)", background: "rgba(124,107,255,0.1)",
+                      padding: "2px 6px", borderRadius: "6px", fontWeight: "600"
+                    }}>📝</span>
+                  )}
                 </div>
 
                 <p className="task-meta">📚 {task.subject}</p>
                 <p className="task-meta">📅 Deadline: {task.deadline}</p>
                 <p className="task-meta">🕐 Estimated: {task.estimatedTime} hrs &nbsp;|&nbsp; Actual: {(task.actualTime || 0).toFixed(2)} hrs</p>
+
+                {/* Notes expandable section */}
+                {task.notes && (
+                  <div style={{ marginTop: "8px" }}>
+                    <button
+                      onClick={() => toggleNotes(task.id)}
+                      style={{
+                        background: "transparent", border: "none",
+                        color: "var(--accent)", fontSize: "12px",
+                        fontWeight: "700", cursor: "pointer", padding: "0"
+                      }}
+                    >
+                      {expandedNotes[task.id] ? "▲ Hide Notes" : "▼ Show Notes"}
+                    </button>
+                    {expandedNotes[task.id] && (
+                      <div style={{
+                        marginTop: "8px",
+                        background: "var(--bg3)",
+                        borderRadius: "8px",
+                        padding: "10px 14px",
+                        fontSize: "13px",
+                        color: "var(--text2)",
+                        lineHeight: "1.6",
+                        whiteSpace: "pre-wrap",
+                        border: "1px solid var(--border)"
+                      }}>
+                        {task.notes}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {task.startedAt && liveTimes[task.id] !== undefined && (
                   <p className="task-timer">⏱ Running: {formatTime(liveTimes[task.id])}</p>
@@ -363,15 +397,12 @@ export default function TaskList() {
                       <button className="btn-complete" onClick={() => handleComplete(task)}>✅ Complete</button>
                     </>
                   )}
-                  <button
-                    onClick={() => handlePin(task)}
-                    style={{
-                      padding: "7px 11px", borderRadius: "8px", border: "none",
-                      fontSize: "11px", fontWeight: "700", cursor: "pointer",
-                      background: task.pinned ? "rgba(255,107,157,0.2)" : "var(--bg3)",
-                      color: task.pinned ? "var(--accent2)" : "var(--text2)"
-                    }}
-                  >
+                  <button onClick={() => handlePin(task)} style={{
+                    padding: "7px 11px", borderRadius: "8px", border: "none",
+                    fontSize: "11px", fontWeight: "700", cursor: "pointer",
+                    background: task.pinned ? "rgba(255,107,157,0.2)" : "var(--bg3)",
+                    color: task.pinned ? "var(--accent2)" : "var(--text2)"
+                  }}>
                     {task.pinned ? "📌 Pinned" : "📌 Pin"}
                   </button>
                   <button className="btn-edit" onClick={() => handleEditStart(task)}>✏️ Edit</button>

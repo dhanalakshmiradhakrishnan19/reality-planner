@@ -9,6 +9,8 @@ export default function TaskForm() {
   const [deadline, setDeadline] = useState("");
   const [estimatedTime, setEstimatedTime] = useState("");
   const [priority, setPriority] = useState("medium");
+  const [notes, setNotes] = useState("");
+  const [showNotes, setShowNotes] = useState(false);
   const { showToast } = useToast();
 
   const handleSubmit = async (e) => {
@@ -26,7 +28,8 @@ export default function TaskForm() {
       sessions: [],
       createdAt: new Date(),
       status: "pending",
-      priority
+      priority,
+      notes: notes.trim()
     };
     try {
       await addTaskToDB(newTask, auth.currentUser.uid);
@@ -36,6 +39,8 @@ export default function TaskForm() {
       setDeadline("");
       setEstimatedTime("");
       setPriority("medium");
+      setNotes("");
+      setShowNotes(false);
     } catch (error) {
       showToast("Failed to add task. Try again.", "error");
     }
@@ -64,7 +69,48 @@ export default function TaskForm() {
         <option value="medium">🟡 Medium Priority</option>
         <option value="low">🟢 Low Priority</option>
       </select>
+
+      {/* Add Notes toggle */}
+      <button
+        type="button"
+        onClick={() => setShowNotes(!showNotes)}
+        style={{
+          background: "var(--bg3)",
+          color: "var(--text2)",
+          border: "1px solid var(--border)",
+          padding: "10px 14px",
+          borderRadius: "10px",
+          fontSize: "14px",
+          cursor: "pointer",
+          fontWeight: "600"
+        }}
+      >
+        {showNotes ? "➖ Hide Notes" : "📝 Add Notes"}
+      </button>
+
       <button type="submit">+ Add Task</button>
+
+      {/* Notes textarea — full width */}
+      {showNotes && (
+        <textarea
+          placeholder="Add notes, links, or instructions for this task..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+          style={{
+            background: "var(--bg3)",
+            border: "1px solid var(--border)",
+            color: "var(--text)",
+            padding: "10px 14px",
+            borderRadius: "10px",
+            fontSize: "14px",
+            resize: "vertical",
+            fontFamily: "inherit",
+            gridColumn: "span 2",
+            width: "100%"
+          }}
+        />
+      )}
     </form>
   );
 }
