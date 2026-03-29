@@ -1,13 +1,85 @@
 export default function Landing({ onGetStarted }) {
-  const features = [
-    { icon: "⏱", title: "Live Time Tracker", desc: "Track actual time spent on every task in real time" },
-    { icon: "🧠", title: "Estimation vs Reality", desc: "See how accurate your time estimates are after each task" },
-    { icon: "🔴", title: "Deadline Risk Predictor", desc: "Get warned automatically when you won't finish on time" },
-    { icon: "📅", title: "Smart Daily Plan", desc: "Tasks sorted by urgency — most critical shown first" },
-    { icon: "📊", title: "Productivity Dashboard", desc: "8 stats including accuracy, delays, and missed deadlines" },
-    { icon: "🍅", title: "Pomodoro Focus Mode", desc: "Built-in 25-minute focus timer with break tracking" },
-    { icon: "🔥", title: "Streak Tracker", desc: "Track your daily completion streaks and personal best" },
-    { icon: "📈", title: "Progress Charts", desc: "Visual charts showing estimated vs actual time per task" },
+
+  const highlights = [
+    {
+      icon: "⏱",
+      title: "Live Time Tracker",
+      desc: "Click Start when you begin a task and Stop when done. The app tracks actual time spent — not just deadlines.",
+      color: "#7c6bff"
+    },
+    {
+      icon: "🧠",
+      title: "Estimation vs Reality",
+      desc: "Enter how long you think a task will take. After completion, see exactly how accurate your estimate was.",
+      color: "#ff6b9d"
+    },
+    {
+      icon: "🔴",
+      title: "Deadline Risk Predictor",
+      desc: "If remaining work exceeds time left before deadline, you get an automatic warning — before it's too late.",
+      color: "#f44336"
+    },
+    {
+      icon: "📅",
+      title: "Smart Daily Plan",
+      desc: "Tasks sorted by urgency combining deadline, effort and time left. Most critical task shown first.",
+      color: "#ff9800"
+    },
+    {
+      icon: "📊",
+      title: "Productivity Dashboard",
+      desc: "10 stats including avg accuracy, start delay, missed deadlines, on-time % and most delayed subject.",
+      color: "#4caf50"
+    },
+    {
+      icon: "🍅",
+      title: "Pomodoro Focus Mode",
+      desc: "Built-in focus timer with customizable 25/45/60 min sessions and 5/10/15 min breaks.",
+      color: "#ff6b9d"
+    },
+    {
+      icon: "🔥",
+      title: "Streak Tracker",
+      desc: "Track how many days in a row you complete tasks. See your current streak and personal best.",
+      color: "#ff9800"
+    },
+    {
+      icon: "📈",
+      title: "Progress Charts",
+      desc: "Visual bar and doughnut charts showing estimated vs actual time per task and completion breakdown.",
+      color: "#7c6bff"
+    }
+  ];
+
+  const allFeatures = [
+    { icon: "🔐", text: "Firebase Authentication" },
+    { icon: "📧", text: "Forgot Password via Email" },
+    { icon: "🎯", text: "Onboarding for New Users" },
+    { icon: "👤", text: "Per-user Data Isolation" },
+    { icon: "📝", text: "Task Add / Edit / Delete" },
+    { icon: "📌", text: "Pin Important Tasks" },
+    { icon: "🏷️", text: "Priority Tags (High/Medium/Low)" },
+    { icon: "🔄", text: "Sort by Deadline / Priority / Date" },
+    { icon: "🔍", text: "Search & Filter Tasks" },
+    { icon: "📤", text: "Export Tasks to CSV" },
+    { icon: "⏱", text: "Live Timer (Start/Stop)" },
+    { icon: "🧠", text: "Estimation vs Reality Insight" },
+    { icon: "🔴", text: "Deadline Risk Predictor" },
+    { icon: "📅", text: "Smart Daily Plan" },
+    { icon: "🔥", text: "Streak Tracker" },
+    { icon: "🍅", text: "Pomodoro Focus Mode" },
+    { icon: "⚙️", text: "Custom Pomodoro Duration" },
+    { icon: "📊", text: "Productivity Dashboard (10 stats)" },
+    { icon: "📈", text: "Progress Charts" },
+    { icon: "🔔", text: "Browser Notifications" },
+    { icon: "💬", text: "Toast Notifications" },
+    { icon: "🎉", text: "Completion Confetti Animation" },
+    { icon: "🔢", text: "Task Counter Badge" },
+    { icon: "🎨", text: "Light / Dark / System Theme" },
+    { icon: "👤", text: "Profile Section" },
+    { icon: "🗑️", text: "Clear All Tasks" },
+    { icon: "📱", text: "Mobile Bottom Navbar" },
+    { icon: "🚀", text: "Deployed on Vercel" }
   ];
 
   return (
@@ -141,7 +213,7 @@ export default function Landing({ onGetStarted }) {
         flexWrap: "wrap"
       }}>
         {[
-          { value: "20+", label: "Features" },
+          { value: "28+", label: "Features" },
           { value: "100%", label: "Free" },
           { value: "Real-time", label: "Firebase Sync" },
           { value: "Mobile", label: "Responsive" }
@@ -161,32 +233,37 @@ export default function Landing({ onGetStarted }) {
         ))}
       </div>
 
-      {/* Features Grid */}
+      {/* Key Features Section */}
       <div style={{ maxWidth: "900px", margin: "0 auto", padding: "60px 24px" }}>
         <h2 style={{
           textAlign: "center",
           fontSize: "28px",
           fontWeight: "800",
+          marginBottom: "12px"
+        }}>
+          Key Features
+        </h2>
+        <p style={{
+          textAlign: "center",
+          color: "var(--text2)",
+          fontSize: "15px",
           marginBottom: "40px"
         }}>
-          Everything you need to <span style={{
-            background: "linear-gradient(135deg, var(--accent), var(--accent2))",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent"
-          }}>actually finish</span> your tasks
-        </h2>
+          Everything you need to actually finish your tasks
+        </p>
 
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
           gap: "16px"
         }}>
-          {features.map((f) => (
+          {highlights.map((f) => (
             <div
               key={f.title}
               style={{
                 background: "var(--card)",
-                border: "1px solid var(--border)",
+                border: `1px solid ${f.color}30`,
+                borderLeft: `4px solid ${f.color}`,
                 borderRadius: "16px",
                 padding: "20px",
                 transition: "transform 0.2s",
@@ -194,9 +271,123 @@ export default function Landing({ onGetStarted }) {
               onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-4px)"}
               onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
             >
-              <div style={{ fontSize: "28px", marginBottom: "10px" }}>{f.icon}</div>
-              <h3 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "6px" }}>{f.title}</h3>
-              <p style={{ fontSize: "12px", color: "var(--text2)", lineHeight: "1.5" }}>{f.desc}</p>
+              <div style={{
+                width: "44px", height: "44px", borderRadius: "12px",
+                background: `${f.color}20`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "22px", marginBottom: "12px"
+              }}>
+                {f.icon}
+              </div>
+              <h3 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "8px", color: "var(--text)" }}>
+                {f.title}
+              </h3>
+              <p style={{ fontSize: "13px", color: "var(--text2)", lineHeight: "1.6" }}>
+                {f.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* How It Works Section */}
+      <div style={{
+        background: "var(--bg2)",
+        borderTop: "1px solid var(--border)",
+        borderBottom: "1px solid var(--border)",
+        padding: "60px 24px"
+      }}>
+        <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+          <h2 style={{
+            textAlign: "center",
+            fontSize: "28px",
+            fontWeight: "800",
+            marginBottom: "12px"
+          }}>
+            How It Works
+          </h2>
+          <p style={{
+            textAlign: "center",
+            color: "var(--text2)",
+            fontSize: "15px",
+            marginBottom: "40px"
+          }}>
+            4 simple steps to fix your planning habits
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {[
+              { step: "01", title: "Add a task", desc: "Enter title, subject, deadline and your estimated time to complete it.", color: "#7c6bff" },
+              { step: "02", title: "Start the timer", desc: "Click Start when you begin working. The app tracks real time automatically.", color: "#ff6b9d" },
+              { step: "03", title: "Get insights", desc: "After stopping, see if you underestimated or overestimated. The app shows accuracy %.", color: "#ff9800" },
+              { step: "04", title: "Review your patterns", desc: "Dashboard shows your accuracy, delay habits, streak, and which subjects you struggle with.", color: "#4caf50" }
+            ].map((item) => (
+              <div key={item.step} style={{
+                display: "flex",
+                gap: "16px",
+                alignItems: "flex-start",
+                background: "var(--card)",
+                borderRadius: "16px",
+                padding: "20px",
+                border: "1px solid var(--border)"
+              }}>
+                <div style={{
+                  width: "44px", height: "44px", borderRadius: "12px",
+                  background: `${item.color}20`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "16px", fontWeight: "900", color: item.color,
+                  flexShrink: 0
+                }}>
+                  {item.step}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: "15px", fontWeight: "700", marginBottom: "6px" }}>{item.title}</h3>
+                  <p style={{ fontSize: "13px", color: "var(--text2)", lineHeight: "1.6" }}>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Complete Feature List */}
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "60px 24px" }}>
+        <h2 style={{
+          textAlign: "center",
+          fontSize: "28px",
+          fontWeight: "800",
+          marginBottom: "12px"
+        }}>
+          Complete Feature List
+        </h2>
+        <p style={{
+          textAlign: "center",
+          color: "var(--text2)",
+          fontSize: "15px",
+          marginBottom: "40px"
+        }}>
+          28 features built into one free app
+        </p>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: "10px"
+        }}>
+          {allFeatures.map((f) => (
+            <div key={f.text} style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              background: "var(--card)",
+              borderRadius: "10px",
+              padding: "12px 16px",
+              border: "1px solid var(--border)",
+              fontSize: "13px",
+              fontWeight: "600"
+            }}>
+              <span style={{ fontSize: "16px" }}>{f.icon}</span>
+              <span style={{ color: "var(--text)" }}>{f.text}</span>
             </div>
           ))}
         </div>
@@ -213,7 +404,7 @@ export default function Landing({ onGetStarted }) {
           Ready to fix your planning?
         </h2>
         <p style={{ color: "var(--text2)", marginBottom: "28px", fontSize: "15px" }}>
-          Free forever. No credit card needed.
+          Free forever. No credit card needed. Start in seconds.
         </p>
         <button
           onClick={onGetStarted}
