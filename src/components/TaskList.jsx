@@ -303,10 +303,28 @@ export default function TaskList() {
 
       {/* Task Cards */}
       {filteredTasks.length === 0 ? (
-        <p style={{ color: "var(--text2)", fontSize: "14px", textAlign: "center", padding: "20px" }}>
-          {tasks.length === 0 ? "No tasks yet. Add one above!" : "No tasks match your search or filter."}
-        </p>
-      ) : (
+  <div style={{
+    textAlign: "center",
+    padding: "48px 24px",
+    background: "var(--card)",
+    borderRadius: "16px",
+    border: "1px solid var(--border)"
+  }}>
+    {tasks.length === 0 ? (
+      <>
+        <div style={{ fontSize: "56px", marginBottom: "16px" }}>📋</div>
+        <p style={{ fontWeight: "700", fontSize: "16px", marginBottom: "8px" }}>No tasks yet</p>
+        <p style={{ color: "var(--text2)", fontSize: "13px" }}>Add your first task above to get started!</p>
+      </>
+    ) : (
+      <>
+        <div style={{ fontSize: "56px", marginBottom: "16px" }}>🔍</div>
+        <p style={{ fontWeight: "700", fontSize: "16px", marginBottom: "8px" }}>No tasks found</p>
+        <p style={{ color: "var(--text2)", fontSize: "13px" }}>Try adjusting your search or filters.</p>
+      </>
+    )}
+  </div>
+) : (
         filteredTasks.map((task) => {
           const overdue = isOverdue(task);
           return (
