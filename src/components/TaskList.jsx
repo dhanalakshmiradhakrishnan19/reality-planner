@@ -345,6 +345,9 @@ export default function TaskList() {
                 <p className="task-meta">📅 Deadline: {task.deadline}</p>
                 <p className="task-meta">🕐 Estimated: {task.estimatedTime} hrs &nbsp;|&nbsp; Actual: {(task.actualTime || 0).toFixed(2)} hrs</p>
 
+                {/* Progress Bar */}
+                <ProgressBar estimated={task.estimatedTime} actual={task.actualTime || 0} isRunning={!!task.startedAt} liveSeconds={liveTimes[task.id]} />
+
                 {/* Notes expandable section */}
                 {task.notes && (
                   <div style={{ marginTop: "8px" }}>
@@ -412,6 +415,74 @@ export default function TaskList() {
             )}
           </div>
         ))
+      )}
+    </div>
+  );
+}
+
+function ProgressBar({ estimated, actual, isRunning, liveSeconds }) {
+  // Add live running seconds on top of stored actual hours
+  const liveHours = isRunning && liveSeconds ? liveSeconds / 3600 : 0;
+  const totalActual = actual + liveHours;
+
+  const percent = estimated > 0 ? (totalActual / estimated) * 100 : 0;
+  const displayPercent = Math.min(percent, 100);
+
+  // Color: green < 75%, yellow 75-100%, red > 100%
+  const barColor =
+    percent > 100 ? "#f44336" :
+    percent >= 75 ? "#ff9800" :
+    "#4caf50";
+
+  const label =
+    percent > 100
+      ? `${percent.toFixed(0)}% — Over estimate!`
+      : `${percent.toFixed(0)}% of estimated time used`;
+
+  if (estimated === 0) return null;
+
+  return (
+    <div style={{ marginTop: "10px", marginBottom: "6px" }}>
+      <div style={{
+        display: "flex", justifyContent: "space-between",
+        alignItems: "center", marginBottom: "5px"
+      }}>
+        <span style={{ fontSize: "11px", fontWeight: "700", color: "var(--text2)" }}>
+          ⏳ Progress
+        </span>
+        <span style={{
+          fontSize: "11px", fontWeight: "700",
+          color: barColor
+        }}>
+          {label}
+        </span>
+      </div>
+      {/* Track */}
+      <div style={{
+        width: "100%", height: "7px",
+        background: "var(--bg3)",
+        borderRadius: "99px",
+        overflow: "hidden",
+        border: "1px solid var(--border)"
+      }}>
+        {/* Fill */}
+        <div style={{
+          width: `${displayPercent}%`,
+          height: "100%",
+          background: barColor,
+          borderRadius: "99px",
+          transition: "width 1s linear",
+          boxShadow: isRunning ? `0 0 6px ${barColor}` : "none"
+        }} />
+      </div>
+      {/* Over-estimate overflow indicator */}
+      {percent > 100 && (
+        <p style={{
+          fontSize: "11px", color: "#f44336", fontWeight: "700",
+          marginTop: "4px"
+        }}>
+          ⚠️ {(totalActual - estimated).toFixed(2)} hrs over estimate
+        </p>
       )}
     </div>
   );
