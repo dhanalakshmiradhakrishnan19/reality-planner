@@ -60,7 +60,7 @@ export default function Auth() {
         setMsg("✅ Account created! A verification link has been sent to " + email + ". Please check your inbox.");
         setTimeout(() => {
           setIsVerifying(true);
-        }, 3000);
+        }, 5000);
       }
     } catch (err) {
       if (err.code === "auth/user-not-found") setError("No account found with this email.");
@@ -241,9 +241,11 @@ export default function Auth() {
               fontSize: "13px",
               fontWeight: "600",
               background: "rgba(76,175,80,0.1)",
-              padding: "10px 14px",
+              border: "1px solid rgba(76,175,80,0.3)",
+              padding: "12px 14px",
               borderRadius: "8px",
-              lineHeight: "1.6"
+              lineHeight: "1.7",
+              marginTop: "4px"
             }}>
               {msg}
             </p>
