@@ -57,10 +57,7 @@ export default function Auth() {
         const result = await createUserWithEmailAndPassword(auth, email, password);
         await sendEmailVerification(result.user);
         await signOut(auth);
-        setMsg("✅ Account created! A verification link has been sent to " + email + ". Please check your inbox.");
-        setTimeout(() => {
-          setIsVerifying(true);
-        }, 5000);
+        setIsVerifying(true);
       }
     } catch (err) {
       if (err.code === "auth/user-not-found") setError("No account found with this email.");
@@ -111,19 +108,31 @@ export default function Auth() {
       <div className="auth-container">
         <div className="auth-card" style={{ textAlign: "center" }}>
           <div style={{ fontSize: "56px", marginBottom: "16px" }}>📧</div>
-          <h1 className="auth-title">Verify Your Email</h1>
-          <p style={{ color: "var(--text2)", fontSize: "14px", lineHeight: "1.6", marginBottom: "8px" }}>
-            A verification link has been sent to:
+          <h1 className="auth-title">Check Your Email</h1>
+          <p style={{
+            color: "var(--text2)", fontSize: "14px", lineHeight: "1.6", marginBottom: "8px"
+          }}>
+            We sent a verification link to:
           </p>
           <p style={{
             fontWeight: "700", fontSize: "14px", color: "var(--accent)",
             background: "rgba(124,107,255,0.1)", padding: "8px 16px",
-            borderRadius: "8px", marginBottom: "20px", wordBreak: "break-all"
+            borderRadius: "8px", marginBottom: "16px", wordBreak: "break-all"
           }}>
             {email}
           </p>
-          <p style={{ color: "var(--text2)", fontSize: "13px", lineHeight: "1.6", marginBottom: "24px" }}>
-            Click the link in the email to verify your account, then come back and sign in.
+          <p style={{
+            color: "var(--text2)", fontSize: "13px", lineHeight: "1.7",
+            marginBottom: "8px",
+            background: "rgba(76,175,80,0.08)",
+            border: "1px solid rgba(76,175,80,0.25)",
+            borderRadius: "8px",
+            padding: "12px 14px"
+          }}>
+            ✅ Account created successfully! Click the link in your email to verify your account, then come back and sign in.
+          </p>
+          <p style={{ color: "var(--text2)", fontSize: "12px", marginBottom: "24px" }}>
+            Don't see it? Check your spam folder.
           </p>
 
           {error && <p className="auth-error" style={{ marginBottom: "12px" }}>{error}</p>}
@@ -244,8 +253,7 @@ export default function Auth() {
               border: "1px solid rgba(76,175,80,0.3)",
               padding: "12px 14px",
               borderRadius: "8px",
-              lineHeight: "1.7",
-              marginTop: "4px"
+              lineHeight: "1.7"
             }}>
               {msg}
             </p>
