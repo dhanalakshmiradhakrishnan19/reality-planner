@@ -48,7 +48,6 @@ export default function Auth() {
     try {
       if (isLogin) {
         const result = await signInWithEmailAndPassword(auth, email, password);
-        // Block unverified users from logging in
         if (!result.user.emailVerified) {
           await signOut(auth);
           setIsVerifying(true);
@@ -56,10 +55,12 @@ export default function Auth() {
         }
       } else {
         const result = await createUserWithEmailAndPassword(auth, email, password);
-        // Send verification email on signup
         await sendEmailVerification(result.user);
         await signOut(auth);
-        setIsVerifying(true);
+        setMsg("✅ Account created! A verification link has been sent to " + email + ". Please check your inbox.");
+        setTimeout(() => {
+          setIsVerifying(true);
+        }, 3000);
       }
     } catch (err) {
       if (err.code === "auth/user-not-found") setError("No account found with this email.");
@@ -94,7 +95,6 @@ export default function Auth() {
     setResendLoading(true);
     setError(""); setMsg("");
     try {
-      // Sign in temporarily to resend
       const result = await signInWithEmailAndPassword(auth, email, password);
       await sendEmailVerification(result.user);
       await signOut(auth);
@@ -235,7 +235,19 @@ export default function Auth() {
           />
 
           {error && <p className="auth-error">{error}</p>}
-          {msg && <p style={{ color: "var(--success)", fontSize: "13px", fontWeight: "600" }}>{msg}</p>}
+          {msg && (
+            <p style={{
+              color: "var(--success)",
+              fontSize: "13px",
+              fontWeight: "600",
+              background: "rgba(76,175,80,0.1)",
+              padding: "10px 14px",
+              borderRadius: "8px",
+              lineHeight: "1.6"
+            }}>
+              {msg}
+            </p>
+          )}
 
           <button type="submit" className="auth-btn">
             {isLogin ? "Sign In" : "Sign Up"}
