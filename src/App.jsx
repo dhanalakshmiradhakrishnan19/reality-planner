@@ -25,16 +25,20 @@ function App() {
   const { theme } = useTheme();
 
   useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-    setUser(currentUser);
-    setLoading(false);
-    if (currentUser) {
-      const done = localStorage.getItem("onboarding_done");
-      if (!done) setShowOnboarding(true);
-    }
-  });
-  return () => unsubscribe();
-}, []);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser && !currentUser.emailVerified) {
+        setUser(null);
+      } else {
+        setUser(currentUser);
+        if (currentUser) {
+          const done = localStorage.getItem("onboarding_done");
+          if (!done) setShowOnboarding(true);
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -50,7 +54,6 @@ function App() {
     }
   }, [user]);
 
-  // Subscribe to tasks for pending count + notifications
   useEffect(() => {
     if (!user) return;
     const unsubscribe = subscribeToTasks(user.uid, (tasks) => {
@@ -83,9 +86,10 @@ function App() {
     }
     return <Auth />;
   }
-if (showOnboarding) {
-  return <Onboarding onDone={() => setShowOnboarding(false)} />;
-}
+
+  if (showOnboarding) {
+    return <Onboarding onDone={() => setShowOnboarding(false)} />;
+  }
 
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "16px", paddingBottom: "80px" }}>
@@ -134,13 +138,13 @@ if (showOnboarding) {
       </div>
 
       {/* Content */}
-<div key={activeTab} className="page-transition">
-  {activeTab === "dashboard" && <Dashboard />}
-  {activeTab === "daily" && <DailyPlan />}
-  {activeTab === "tasks" && <> <TaskForm /> <TaskList /> </>}
-  {activeTab === "pomodoro" && <Pomodoro pomodoroSettings={pomodoroSettings} />}
-  {activeTab === "settings" && <Settings pomodoroSettings={pomodoroSettings} setPomodoroSettings={setPomodoroSettings} />}
-</div>
+      <div key={activeTab} className="page-transition">
+        {activeTab === "dashboard" && <Dashboard />}
+        {activeTab === "daily" && <DailyPlan />}
+        {activeTab === "tasks" && <> <TaskForm /> <TaskList /> </>}
+        {activeTab === "pomodoro" && <Pomodoro pomodoroSettings={pomodoroSettings} />}
+        {activeTab === "settings" && <Settings pomodoroSettings={pomodoroSettings} setPomodoroSettings={setPomodoroSettings} />}
+      </div>
 
       {/* Bottom Navbar — Mobile only */}
       <div className="bottom-navbar">
